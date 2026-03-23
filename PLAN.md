@@ -208,6 +208,7 @@ Implementar un EventBus estático para comunicación desacoplada entre sistemas.
    public class OnRunEnd { public int RunNumber; public int Score; }
    public class OnBuffPurchased { public BuffData Buff; }
    public class OnMissionsreshuffled { }
+   public class OnMissionDiscarded { public MissionInstance Mission; }
    ```
 3. Crear `Assets/Scripts/Core/GameManager.cs`:
    - Singleton persistente (DontDestroyOnLoad)
@@ -687,6 +688,56 @@ Implementar la lógica de progresión por días/runs. Cada run tiene una duraci�
    - Stats de héroes NO persisten (se generan de nuevo cada run)
 
 **Criterio de éxito:** El juego avanza por runs, el timer funciona, las condiciones de fin se cumplen correctamente.
+
+---
+
+### TAREA 2.5 — Descarte activo de misiones
+**Estado:** `[ ]`
+**Responsable:** Dev D
+**Duración estimada:** 1 hora
+**Dependencias:** 2.2
+
+**Descripción:**
+Permitir al jugador descartar cartas de misión que no le convengan, a cambio de tiempo. No cuesta coins, pero existe un cooldown global antes de poder descartar otra carta. Esto añade decisión activa sobre la mano sin romper el balance económico: el jugador puede deshacerse de una misión imposible para su héroe actual, pero no puede spamear descartes para buscar la misión perfecta.
+
+**Pasos:**
+1. Añadir botón "Rechazar" en `MissionCard.cs`:
+   - Visible siempre, pero grisado cuando el cooldown está activo
+   - Posición: esquina inferior de la carta, fuera del área de drag para no interferir
+   - No disponible si la carta está en estado `desactivada` (ya asignada / en tránsito)
+2. Añadir lógica de descarte en `MissionCardArea.cs`:
+   ```csharp
+   public float DiscardCooldownSeconds = 10f;  // Configurable en Inspector
+   private float _discardCooldownTimer = 0f;
+   public bool CanDiscard => _discardCooldownTimer <= 0f;
+
+   public void DiscardMission(MissionCard card) {
+       if (!CanDiscard) return;
+       // 1. Animación de salida (fade out + caída hacia abajo)
+       // 2. Publicar OnMissionDiscarded
+       // 3. Llamar MissionDeck.DrawCard() y añadir nueva carta a la mano
+       // 4. Activar cooldown: _discardCooldownTimer = DiscardCooldownSeconds
+   }
+
+   void Update() {
+       if (_discardCooldownTimer > 0f)
+           _discardCooldownTimer -= Time.deltaTime;
+   }
+   ```
+3. Indicador visual del cooldown en el botón "Rechazar":
+   - Fill circular (Image de tipo Filled) que se vacía durante el cooldown
+   - Al completarse: pequeño destello/pulse para avisar al jugador que ya puede descartar
+   - Tooltip al hover: "Rechaza esta misión y roba una nueva. Cooldown: Xs"
+4. Publicar evento en `GameEvents.cs`:
+   ```csharp
+   public class OnMissionDiscarded { public MissionInstance Mission; }
+   ```
+   - El AudioManager puede escuchar este evento para reproducir un sonido de rechazo (papel arrugándose)
+5. Casos límite a manejar:
+   - Si el mazo está vacío al descartar: no se puede descartar (botón desactivado con tooltip "Mazo vacío")
+   - Si solo queda 1 carta en mano: el descarte deja la mano momentáneamente vacía hasta que se roba la nueva
+
+**Criterio de éxito:** El jugador puede descartar una carta. El cooldown se respeta correctamente. La mano se repone automáticamente. El botón comunica claramente cuándo está disponible y cuándo no.
 
 ---
 
@@ -1223,6 +1274,7 @@ Generar el build final del juego y subirlo a la plataforma de la game jam (itch.
 
 2.1 + 2.2 ──► 2.3 ──► 4.2
 2.1 + 2.2 + 2.3 ──► 2.4
+2.2 ──► 2.5
 
 2.4 + 3.1 ──► 3.2
 2.4 + 1.2 ──► 3.3
@@ -1240,7 +1292,7 @@ Generar el build final del juego y subirlo a la plataforma de la game jam (itch.
 | Dev A | Sistemas core + datos | 0.1, 1.1, 1.3, 3.4, 5.1, 6.3 |
 | Dev B | Misiones + evaluación + UI info | 0.4, 1.2, 1.4, 3.3, 4.2, 4.5 |
 | Dev C | Héroes + interacción | 0.3, 2.1, 2.3, 3.2, 4.5 |
-| Dev D | Misiones deck + UI + VFX | 0.2, 2.2, 2.4, 4.1, 4.3, 5.2 |
+| Dev D | Misiones deck + UI + VFX | 0.2, 2.2, 2.4, 2.5, 4.1, 4.3, 5.2 |
 
 > Nota: Las asignaciones son sugerencias. El equipo puede reorganizarlas según habilidades reales.
 
@@ -1260,6 +1312,7 @@ Generar el build final del juego y subirlo a la plataforma de la game jam (itch.
 | CoinsBaseMisión | 3-8 | Por confirmar |
 | StatRange héroes Common | 1-15 | Por confirmar |
 | StatRange héroes Boss | 50-100 | Por confirmar |
+| DiscardCooldownSeconds | 10s | Por confirmar |
 
 ---
 
