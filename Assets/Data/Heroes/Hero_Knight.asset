@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17af62446a7752b43800b78536d870c0, type: 3}
+  m_Name: Hero_Knight
+  userData:
+  assetBundleName:
+  assetBundleVariant:
+  HeroName: Knight
+  Portrait: {fileID: 0}
+  Rarity: 0
+  StrengthRange: {x: 7, y: 12}
+  DexterityRange: {x: 3, y: 7}
+  IntelligenceRange: {x: 2, y: 5}
+  CharismaRange: {x: 3, y: 6}
+  PatienceMultiplier: 1
+  BasePatience: 30
+  FlavorText: "A battle-hardened warrior who always leads from the front. Strength is
+    the only language they speak."

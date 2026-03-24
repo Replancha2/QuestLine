@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17af62446a7752b43800b78536d870c0, type: 3}
+  m_Name: Hero_Bard
+  userData:
+  assetBundleName:
+  assetBundleVariant:
+  HeroName: Bard
+  Portrait: {fileID: 0}
+  Rarity: 0
+  StrengthRange: {x: 3, y: 5}
+  DexterityRange: {x: 4, y: 7}
+  IntelligenceRange: {x: 5, y: 8}
+  CharismaRange: {x: 7, y: 12}
+  PatienceMultiplier: 1.2
+  BasePatience: 30
+  FlavorText: "Silver-tongued and endlessly charming. Can talk their way into\u2014or
+    out of\u2014almost anything."

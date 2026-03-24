@@ -182,7 +182,7 @@ Crear las escenas del juego en Unity con los GameObjects placeholder necesarios 
 ---
 
 ### TAREA 0.4 — EventBus / sistema de eventos global
-**Estado:** `[ ]`
+**Estado:** `[x] COMPLETADA`
 **Responsable:** Dev D
 **Duración estimada:** 1 hora
 **Dependencias:** 0.1
@@ -234,6 +234,17 @@ Implementar un EventBus estático para comunicación desacoplada entre sistemas.
 
 **Criterio de éxito:** El EventBus compila sin errores. Se puede publicar y recibir eventos entre dos scripts sin referencia directa.
 
+**Notas de implementación:**
+- `Assets/Scripts/Core/EventBus.cs` — clase estática genérica con diccionario `Dictionary<Type, List<Delegate>>`. Itera sobre snapshot de la lista para soportar (des)suscripción durante dispatch.
+- `Assets/Scripts/Core/GameEvents.cs` — todos los eventos del catálogo definidos.
+- `Assets/Scripts/Core/GameManager.cs` — singleton DontDestroyOnLoad, escucha `OnHeroLeft` y `OnDayThresholdReached`. También acumula `TotalFameEarned` escuchando `OnMissionCompleted`.
+- **Stubs creados** para que todo compile desde el día 0 (se reemplazarán en sus respectivas tareas):
+  - `Assets/Scripts/Data/HeroData.cs` → tarea 1.1
+  - `Assets/Scripts/Data/MissionData.cs` → tarea 1.2
+  - `Assets/Scripts/Data/BuffData.cs` → tarea 1.3
+  - `Assets/Scripts/Data/DailyEventData.cs` → tarea 3.4
+  - `Assets/Scripts/Economy/ConsumableType.cs` → tarea 3.2
+
 ---
 
 ## FASE 1 — SISTEMAS DE DATOS CORE
@@ -243,7 +254,7 @@ Implementar un EventBus estático para comunicación desacoplada entre sistemas.
 ---
 
 ### TAREA 1.1 — HeroData ScriptableObject
-**Estado:** `[ ]`
+**Estado:** `[x] COMPLETADA`
 **Responsable:** Dev A
 **Duración estimada:** 1.5 horas
 **Dependencias:** 0.1, 0.4
@@ -359,10 +370,17 @@ Definir la estructura de datos de un héroe como ScriptableObject base y la clas
 
 **Criterio de éxito:** Se puede generar un `HeroInstance` desde cualquier `HeroData`. Los valores de stats están dentro del rango definido. `CalculateSuccessChance` devuelve valores coherentes.
 
+**Notas de implementación:**
+- `Assets/Scripts/Utils/Enums.cs` — Enums creados: `HeroStat`, `HeroRarity`, `HeroTrait`, `MissionRank`, `BuffType`, `DailyEventType`. `ConsumableType` ya existía en `Economy/ConsumableType.cs` (no duplicada).
+- `Assets/Scripts/Data/HeroData.cs` — ScriptableObject completo con rangos de stats, personalidad (PatienceMultiplier, BasePatience) y FlavorText.
+- `Assets/Scripts/Heroes/HeroInstance.cs` — Clase runtime con `Generate()`, `WillAcceptMission()`, `CalculateSuccessChance()`, `GetDominantStat()`. Lógica de Impulsive (Patience/2) y Distrustful (HiddenStats) implementada.
+- `Assets/Scripts/Data/MissionData.cs` (stub actualizado) — Agregados `Rank`, `PrimaryStat`, `SecondaryStats`, `CoinsReward`, `FameReward` y métodos `GetEffectivePrimaryReq()`/`GetEffectiveSecondaryReq()` a `MissionInstance` para que `HeroInstance` compile. El stub anterior tenía `BaseData`; ahora usa `Template` (alineado con la spec de Tarea 1.2).
+- `Assets/Data/Heroes/` — 4 ScriptableObjects creados: `Hero_Knight` (STR), `Hero_Rogue` (DEX), `Hero_Mage` (INT), `Hero_Bard` (CHA).
+
 ---
 
 ### TAREA 1.2 — MissionData ScriptableObject
-**Estado:** `[ ]`
+**Estado:** `[x] COMPLETADA`
 **Responsable:** Dev B
 **Duración estimada:** 2 horas
 **Dependencias:** 1.1 (necesita Enums)
@@ -460,10 +478,16 @@ Definir la estructura de datos de una misión. Las misiones tienen requisitos oc
 
 **Criterio de éxito:** Se puede crear una MissionInstance desde cualquier MissionData. `GetRevealedHints()` devuelve solo las pistas marcadas como reveladas. Las pistas inician ocultas y solo se revelan al activarlas explícitamente. El `FameReward` de misiones de Rango alto es notablemente mayor que el de Rango bajo.
 
+**Notas de implementación:**
+- `Assets/Scripts/Data/MissionData.cs` — ScriptableObject completo con identidad, rango, stats primario/secundarios, recompensas y array de `MissionHint[]`. El requisito numérico se calcula 100% en runtime (no se almacena).
+- `Assets/Scripts/Missions/MissionInstance.cs` — Clase runtime con `RevealedHintIndices`, `RevealHint(int)`, `RevealAllHints()`, `GetRevealedHints()`, `HasAnyRevealedHint()` y la fábrica `FromData(MissionData, int)`. Las fórmulas `GetEffectivePrimaryReq()` / `GetEffectiveSecondaryReq()` migradas del stub anterior.
+- `Assets/Editor/MissionDataGenerator.cs` — Script de editor (menú `Questline → Generate Mission Assets`) que crea los **48 MissionData assets** automáticamente en `Assets/Data/Missions/`. Naming: `Mission_R{rank}_{Stat}.asset`. Idempotente: no sobreescribe assets ya existentes. Recompensas base: `CoinsReward = rank × 3`, `FameReward = rank × 5`. Cada misión incluye 2 pistas (vaga/naranja + directa/verde). Descripciones por rango: R1-R4 directas, R5-R8 ambiguas, R9-R12 engañosas.
+- **Para generar los assets:** abrir Unity → menú `Questline → Generate Mission Assets`. Los 48 `.asset` aparecen en `Assets/Data/Missions/`.
+
 ---
 
 ### TAREA 1.3 — BuffData ScriptableObject
-**Estado:** `[ ]`
+**Estado:** `[x] COMPLETADA`
 **Responsable:** Dev A
 **Duración estimada:** 1 hora
 **Dependencias:** 1.1, 1.2
@@ -552,10 +576,19 @@ Definir la estructura de los buffs comprables con monedas. Los buffs son el cora
 
 **Criterio de éxito:** Los buffs se pueden crear en el editor. `BuffManager.ApplyBuff` modifica los valores correctamente.
 
+**Notas de implementación:**
+- `Assets/Scripts/Data/BuffData.cs` — ScriptableObject completo: nombre, descripción, ícono, costo, `BuffType`, `IsPermanent`, y campos condicionados por tipo (`AffectedStat`/`StatBoostAmount`, `HintsToReveal`, `PatienceBoostPercent`, `FailProtectionCount`).
+- `Assets/Scripts/Data/ConsumableData.cs` — Nuevo SO para consumibles de un solo uso: nombre, descripción, ícono, costo, `ConsumableType`.
+- `Assets/Scripts/Core/BuffManager.cs` — Singleton `MonoBehaviour` con dos capas: `_permanentBuffs` (tienda) y `_dailyModifiers` (eventos diarios). API pública: `ApplyBuff()`, `ApplyDailyModifier()`, `ClearDailyModifiers()`, `GetActiveStatBonus()`, `GetPatienceMultiplier()`, `HasFailProtection()`, `ConsumeFailProtection()`. Publica `OnBuffPurchased` al aplicar cualquier buff.
+- `Assets/Scripts/Core/ConsumableManager.cs` — Singleton `MonoBehaviour` con inventario `Dictionary<ConsumableType, int>`. API: `AddConsumable()`, `GetCount()`, `UseConsumable()`. `StatRevealHand` delega a `MissionDeck.Instance.CurrentHand`; `FullStatReveal` llama `RevealHint(0)` y `RevealHint(1)` sobre la misión objetivo. Publica `OnConsumableUsed`.
+- `Assets/Scripts/Missions/MissionDeck.cs` — **Stub** creado para que `ConsumableManager` compile. Implementación completa en Tarea 2.1.
+- `Assets/Editor/BuffDataGenerator.cs` — Script de editor (menú `Questline → Generate Buff & Consumable Assets`) que crea los **9 BuffData** en `Assets/Data/Buffs/` y los **2 ConsumableData** en `Assets/Data/Consumables/`. Idempotente: no sobreescribe assets ya existentes.
+- **Para generar los assets:** abrir Unity → menú `Questline → Generate Buff & Consumable Assets`.
+
 ---
 
 ### TAREA 1.4 — Sistema de evaluación de misiones
-**Estado:** `[ ]`
+**Estado:** `[x]`
 **Responsable:** Dev B
 **Duración estimada:** 1.5 horas
 **Dependencias:** 1.1, 1.2, 1.3
@@ -634,6 +667,12 @@ Implementar la lógica central de resolución de misiones: dada una misión y un
 
 **Criterio de éxito:** `MissionEvaluator.Evaluate` devuelve resultados estadísticamente coherentes. Los rasgos Greedy, Demanding, Specialist, Reckless e Impulsive modifican el resultado correctamente. Los eventos se publican correctamente.
 
+**Implementación (completada 2026-03-24):**
+- `Assets/Scripts/Missions/MissionEvaluator.cs` — clase estática con `Evaluate(HeroInstance, MissionInstance) → MissionResult` y clase `MissionResult`.
+- `Assets/Scripts/Core/DailyEventManager.cs` — stub creado para que compile; expone `GetFameModifier()` (devuelve 1.0f hasta Tarea 3.4).
+- `Assets/Scripts/Missions/MissionEvaluatorTest.cs` — MonoBehaviour de tests manuales (8 casos de prueba, ejecutar en Play Mode; eliminar en build final).
+- **Nota Tarea 3.4:** `DailyEventManager` es un stub. Al implementar 3.4, completar `_fameModifier` con la lógica del evento del día activo.
+
 ---
 
 ## GAME LOOP — ESTRUCTURA DE UN DÍA
@@ -674,7 +713,7 @@ Implementar la lógica central de resolución de misiones: dada una misión y un
 ---
 
 ### TAREA 2.1 — HeroQueue: cola de héroes y slots
-**Estado:** `[ ]`
+**Estado:** `[x] COMPLETADA`
 **Responsable:** Dev C
 **Duración estimada:** 2 horas
 **Dependencias:** 1.1, 0.3, 0.4
@@ -730,10 +769,19 @@ Implementar el sistema que gestiona la llegada de héroes, los 4 slots visibles 
 
 **Criterio de éxito:** Los héroes aparecen en pantalla, tienen barras de paciencia que se agotan, y desaparecen solos si no reciben misión.
 
+**Implementación (completada 2026-03-24):**
+- `Assets/Scripts/Heroes/HeroQueueConfig.cs` — ScriptableObject de configuración: `SpawnIntervalBase` (15s), `SpawnIntervalMin` (5s), `MaxSimultaneousHeroes` (4), array `HeroTemplates`. Crear el asset en `Assets/Data/Heroes/` y asignarlo en Inspector.
+- `Assets/Scripts/Heroes/HeroSpawner.cs` — Singleton MonoBehaviour. Escucha `OnDayStart`/`OnDayEnd`/`OnGameOver` para arrancar/parar la coroutine de spawn. `SpawnIntervalMultiplier` expuesto para que `DailyEventManager` lo modifique (Tarea 3.4). Stats escalados por día: `Random.Range(2+day, 5+day*2)`. Publica `OnHeroArrived`.
+- `Assets/Scripts/Heroes/HeroPatience.cs` — MonoBehaviour de timer por slot. `Activate(hero)` inicia la cuenta atrás (aplica `BuffManager.GetPatienceMultiplier()`). Barra de colores verde→naranja→rojo; Impulsive arranca en rojo. Threshold <20% llama `TriggerNervousAnimation()` (placeholder para Fase 4/5). Al expirar publica `OnHeroLeft { WasAngry=true }`.
+- `Assets/Scripts/Heroes/HeroQueue.cs` — Singleton MonoBehaviour. Gestiona array de `HeroSlotUI[]` (asignar en Inspector). Cola interna `Queue<HeroInstance>` para overflow. Escucha `OnHeroArrived`, `OnMissionAssigned`, `OnHeroDied`, `OnHeroLeft` para fill/remove de slots.
+- `Assets/Scripts/Heroes/HeroSlotUI.cs` — MonoBehaviour de presentación de un slot. `SetHero()` → actualiza retrato, stats (Distrustful oculta 2), rasgos, activa `HeroPatience`. `ClearHero()` → pausa timer, dispara animación Exit (AnimationEvent llama `FinishClear()`). Iconos de rasgos (abreviatura 3 letras); hook de tooltip comentado para Fase 4.
+- **Setup requerido:** en la escena, asignar los 4 `HeroSlotUI` al array `_slots` de `HeroQueue`. Asignar `HeroQueueConfig` asset a `HeroSpawner`. Cada slot necesita un `HeroPatience` asignado en `_patience`. El Animator es opcional; sin él `FinishClear()` se llama inmediatamente.
+- **Nota Tarea 3.4:** `HeroSpawner.SpawnIntervalMultiplier` se modifica desde `DailyEventManager` al procesar eventos `SpawnSpeedBuff`/`SpawnSpeedDebuff`.
+
 ---
 
 ### TAREA 2.2 — MissionDeck: pool diario y mano de misiones
-**Estado:** `[ ]`
+**Estado:** `[x]`
 **Responsable:** Dev D
 **Duración estimada:** 2 horas
 **Dependencias:** 1.2, 0.4
@@ -767,10 +815,16 @@ Implementar el pool de misiones diarias y la mano visible del jugador. Cada día
 
 **Criterio de éxito:** El jugador ve 5 cartas de misión. Al retirar una del juego, se roba otra automáticamente. Las pistas se muestran correctamente según el run.
 
+**Notas de implementación:**
+- `MissionDeck.cs` — Implementación completa del stub. Incluye `BuildDailyPool`, `DrawCard`, `FillHand`, `RemoveFromHand`, `Reshuffle`, eventos `OnCardDrawn`/`OnPoolExhausted`. Rango por día con fórmula inline; se reemplaza con `DayConfig` en Tarea 2.4.
+- `MissionCard.cs` — MonoBehaviour UI nuevo. Estados `Normal/Hovered/Selected/InTransit`, animaciones `PlayEnterAnimation` (slide+fade) y `PlayDiscardAnimation` (caída+fade) vía Coroutines. Se suscribe a `OnConsumableUsed` para refrescar pistas.
+- `MissionCardArea.cs` — Layout manager nuevo. Escucha `MissionDeck.OnCardDrawn`, instancia prefabs, los distribuye horizontalmente centrados y expone `RemoveCard()` para Tarea 2.3.
+- **Pendiente de setup en escena:** asignar `_allMissions` en `MissionDeck`, asignar `_cardPrefab` y `_deckAnchor` en `MissionCardArea`, crear prefab de carta con las referencias TMP/Image necesarias.
+
 ---
 
 ### TAREA 2.3 — Drag & Drop: asignación de misión a héroe
-**Estado:** `[ ]`
+**Estado:** `[x]` ✅ Completada 2026-03-24
 **Responsable:** Dev C
 **Duración estimada:** 3 horas
 **Dependencias:** 2.1, 2.2
@@ -820,10 +874,21 @@ Implementar el sistema de drag and drop que permite arrastrar una carta de misi�
 
 **Criterio de éxito:** Se puede arrastrar una carta a un héroe. El héroe acepta o rechaza. Se ejecuta la evaluación. Los eventos se publican correctamente.
 
+**Archivos implementados:**
+- `Assets/Scripts/UI/CardDragHandler.cs` — `IBeginDragHandler/IDragHandler/IEndDragHandler`. Se reparenta al canvas raíz durante el drag, desactiva `blocksRaycasts` para que los drops pasen al target, y hace tween de regreso si el drop no fue aceptado. Expone `CardDragHandler.Current` (estático) para que `HeroDropTarget` calcule el highlight.
+- `Assets/Scripts/UI/HeroDropTarget.cs` — `IDropHandler + IPointerEnterHandler/Exit`. Muestra borde verde/rojo según `WillAcceptMission`. Al aceptar: publica `OnMissionAssigned`, llama `MissionCardArea.RemoveCard`, `MissionDeck.RemoveFromHand` y `MissionEvaluator.Evaluate`. Al rechazar: shake + texto "¡Me niego!".
+
+**Pendiente de setup en escena:**
+- Añadir `CardDragHandler` al prefab de `MissionCard` (junto a `MissionCard` existente).
+- Añadir `HeroDropTarget` a cada `HeroSlotUI` en la escena.
+- En cada `HeroDropTarget`: asignar en el Inspector una `Image` de borde para el highlight y (opcional) un `TextMeshProUGUI` para el texto de rechazo.
+- Asegurarse de que el `Canvas` raíz tenga `GraphicRaycaster` y que el EventSystem esté en la escena.
+- Las animaciones de "héroe parte de aventura" (paso 6-7 del flujo) son responsabilidad de **Tarea 4.2**.
+
 ---
 
 ### TAREA 2.4 — RunManager: gestión de días/runs
-**Estado:** `[ ]`
+**Estado:** `[x]` ✅ Completada 2026-03-24
 **Responsable:** Dev D
 **Duración estimada:** 1.5 horas
 **Dependencias:** 0.4, 2.1, 2.2
@@ -881,10 +946,18 @@ Implementar la lógica de progresión por días. Cada día termina cuando la **F
 
 **Criterio de éxito:** El día termina al superar el umbral de Fama (victoria) o al llegar a 0 vidas (Game Over). El pool refleja el rango correcto del día. Las vidas se resetean correctamente entre días.
 
+**Notas de implementación:**
+- `DayConfig.cs` — ScriptableObject en `Assets/Scripts/Data/`. Crear asset en `Assets/Data/DayConfig.asset` desde Unity: Create → Questline → Day Config. Tiene curvas con valores por defecto sensatos.
+- `FameManager.cs` — Singleton en `Assets/Scripts/Core/`. Escucha `OnMissionCompleted`, aplica modificador de `DailyEventManager`, publica `OnFameEarned` y `OnDayThresholdReached`. Expone `GetDayThreshold(int)` y `ResetDayFame()`. Tiene referencia `[SerializeField]` a `DayConfig`.
+- `RunManager.cs` — Singleton orquestador en `Assets/Scripts/Core/`. No duplica lógica de `GameManager` (vidas, Game Over); solo coordina el startup del día. Tiene referencia `[SerializeField]` a `DayConfig` y la expone en propiedad `DayConfig` pública.
+- `MissionDeck.cs` — Actualizado: `BuildDailyPool` usa `RunManager.Instance.DayConfig` o `FameManager.Instance.Config` si disponibles; si no, cae en las fórmulas inline originales.
+- **Setup en escena:** Añadir GameObject con `RunManager`, `FameManager`. Asignar `DayConfig.asset` en ambos. Llamar `RunManager.Instance.StartDay()` al inicio de la partida.
+- **Nota de diseño:** `DayNumber`, `DayLives` y `OnGameOver` permanecen en `GameManager` para evitar duplicación. `RunManager` es solo el orquestador de inicio de día.
+
 ---
 
 ### TAREA 2.5 — Descarte activo de misiones
-**Estado:** `[ ]`
+**Estado:** `[x]` ✅ Completada 2026-03-24
 **Responsable:** Dev D
 **Duración estimada:** 1 hora
 **Dependencias:** 2.2
@@ -931,6 +1004,12 @@ Permitir al jugador descartar cartas de misión que no le convengan, a cambio de
 
 **Criterio de éxito:** El jugador puede descartar una carta. El cooldown se respeta correctamente. La mano se repone automáticamente. El botón comunica claramente cuándo está disponible y cuándo no.
 
+**Implementación (completada 2026-03-24):**
+- `MissionCard.cs` — Nuevos campos `[Header("Descarte")]`: `_discardButton` (Button), `_discardCooldownFill` (Image Filled), `_discardTooltipText` (TMP), `_pulseScale`, `_pulseDuration`. Evento público `OnDiscardRequested`. Método `SetDiscardButtonState(bool, float, string)` que controla interactuabilidad, fill del indicador y tooltip, y dispara el pulse al quedar disponible. Hover del tooltip implementado con `EventTrigger` en el botón.
+- `MissionCardArea.cs` — Campo `DiscardCooldownSeconds` (default 10s). Propiedad `CanDiscard`. Método `DiscardMission(MissionCard)`: valida cooldown, estado InTransit y mazo vacío; anima la carta, publica `OnMissionDiscarded`, llama `RemoveFromHand` (que repone la mano), activa el cooldown. `Update()` tick del timer + `UpdateDiscardButtonStates()`. Se suscribe a `card.OnDiscardRequested` en `SpawnCardRoutine`.
+- `GameEvents.cs` — `OnMissionDiscarded` ya existía; no requirió cambios.
+- **Setup en prefab:** En el prefab de MissionCard añadir un Button hijo en la esquina inferior con una Image Filled hija para el cooldown, y un TextMeshProUGUI para el tooltip. Asignar las referencias en el Inspector.
+
 ---
 
 ## FASE 3 — ECONOMÍA Y ROGUELIKE
@@ -940,7 +1019,7 @@ Permitir al jugador descartar cartas de misión que no le convengan, a cambio de
 ---
 
 ### TAREA 3.1 — CoinJar: sistema de monedas
-**Estado:** `[ ]`
+**Estado:** `[x]`
 **Responsable:** Dev A
 **Duración estimada:** 1.5 horas
 **Dependencias:** 0.4, 1.4
@@ -967,10 +1046,22 @@ Implementar el frasco de propinas (CoinJar) visible en pantalla. Los héroes dej
 
 **Criterio de éxito:** Las monedas se acumulan al completar misiones. El contador en pantalla se actualiza con animación.
 
+**Archivos creados/modificados:**
+- `Assets/Scripts/Economy/CoinJar.cs` ← NUEVO — MonoBehaviour UI + animaciones
+- `Assets/Scripts/Heroes/HeroInstance.cs` ← XP, Level, GainXP() añadidos
+- `Assets/Scripts/Data/MissionData.cs` ← campo IsBoss añadido
+- `Assets/Scripts/Missions/MissionEvaluator.cs` ← bonus de nivel, multiplicador boss, hero.GainXP()
+
+**⚠️ Pendiente en Unity Editor (no automatizable):**
+- Crear prefab `CoinJarUI` con GameObject que tenga: `CoinJar.cs`, TMP_Text para el contador, Image para el sprite del frasco.
+- Crear prefab `CoinFlyParticle` (sprite de moneda simple) y asignarlo al campo `_coinFlyPrefab`.
+- Asignar referencias en el Inspector: `_coinCountText`, `_jarRect`, `_coinSpawnPoint`.
+- Arrastrar el prefab `CoinJarUI` a la escena principal (Canvas del HUD).
+
 ---
 
 ### TAREA 3.2 — ShopManager: tienda inter-run
-**Estado:** `[ ]`
+**Estado:** `[x]`
 **Responsable:** Dev C
 **Duración estimada:** 2 horas
 **Dependencias:** 1.3, 3.1, 2.4
@@ -1020,10 +1111,27 @@ Implementar la pantalla de tienda que aparece entre runs. El jugador puede gasta
 
 **Criterio de éxito:** El shop aparece entre runs, el jugador puede comprar buffs, los buffs se aplican y persisten en la siguiente run.
 
+**Implementación (completada 2026-03-24):**
+- `Assets/Scripts/Economy/ShopOffer.cs` ← NUEVO — wrapper que envuelve un `BuffData` o `ConsumableData`; expone `Name`, `Description`, `Cost`, `Icon` e `IsBuff`.
+- `Assets/Scripts/Economy/ShopManager.cs` ← NUEVO — Singleton que escucha `OnDayEnd` para abrir la tienda. `OpenShop()` mezcla pools y selecciona 3 ítems (⚠️ `_shopSlots` ajustable en Inspector). `PurchaseBuff()` y `PurchaseConsumable()` delegan en `CoinJar`, `BuffManager` y `ConsumableManager`. El buff `MissionReshuffle` se acumula como `ReshuffleCharges` en lugar de enviarse a `BuffManager`. `UseReshuffle()` llama `MissionDeck.Reshuffle()` → `MissionCardArea.ClearAllCards()` → `MissionDeck.ClearHand()` → `MissionDeck.FillHand()`. `CloseShop()`/`SkipShop()` cierra el panel y llama `RunManager.StartDay()`.
+- `Assets/Scripts/UI/ShopSlotUI.cs` ← NUEVO — slot individual con `Setup(ShopOffer)`, `RefreshAffordable(int)`, `MarkPurchased()` (overlay gris + animación de brillo) y evento `OnBuyClicked`.
+- `Assets/Scripts/UI/ShopPanel.cs` ← NUEVO — panel que escucha `ShopManager.OnShopOpened/OnShopClosed` para mostrarse/ocultarse. Popula los slots, muestra contador de coins, botón "Continuar". Se suscribe a `OnCoinEarned`/`OnCoinSpent` para refrescar asequibilidad dinámicamente. El shake por coins insuficientes lo gestiona `CoinJar` automáticamente.
+- `Assets/Scripts/Economy/ConsumableType.cs` ← limpiado stub, tipos ya definitivos con documentación XML.
+- `Assets/Scripts/Missions/MissionCardArea.cs` ← añadido `Instance` estático + `ClearAllCards()` (necesario para UseReshuffle).
+- `Assets/Scripts/Missions/MissionDeck.cs` ← añadido `ClearHand()` (necesario para UseReshuffle sin disparar FillHand por cada carta).
+
+**⚠️ Pendiente en Unity Editor (no automatizable):**
+- Crear prefab `ShopPanel` en Canvas: título TMP, 3 GameObjects hijos con `ShopSlotUI` (cada uno con Image icono, TMP nombre, TMP descripción, TMP costo, Button comprar, Image overlay "vendido", Image brillo), Button "Continuar", TMP contador de coins.
+- Asignar en `ShopPanel`: referencias a los 3 `ShopSlotUI`, al `Button` continuar, al TMP coins y al `ShopManager` de la escena.
+- Asignar en `ShopManager` Inspector: arrastrar los `BuffData` assets a `_availableBuffs[]` y los `ConsumableData` a `_availableConsumables[]`.
+- Añadir `ShopPanel` al Canvas de la escena (desactivado por defecto).
+- Añadir `ShopManager` como GameObject persistente en la escena.
+- En cada `ShopSlotUI`, conectar el `Button.onClick` al método `HandleBuyButton()`.
+
 ---
 
 ### TAREA 3.3 — FameManager: fama, umbrales y fin de día
-**Estado:** `[ ]`
+**Estado:** `[x]` — Completada 2026-03-24
 **Responsable:** Dev B
 **Duración estimada:** 1.5 horas
 **Dependencias:** 0.4, 2.4
@@ -1069,7 +1177,7 @@ Gestionar la Fama acumulada en la partida y los umbrales de victoria por día. F
 ---
 
 ### TAREA 3.4 — Sistema de Eventos Diarios
-**Estado:** `[ ]`
+**Estado:** `[x]`
 **Responsable:** Dev A
 **Duración estimada:** 1.5 horas
 **Dependencias:** 0.4, 1.3, 2.4
@@ -1123,6 +1231,17 @@ Implementar el sistema de eventos aleatorios que se activan al inicio de cada d�
    - Tooltip al hover con descripción completa del efecto
 
 **Criterio de éxito:** Cada día activa un evento aleatorio. El efecto se aplica correctamente y se elimina al iniciar el siguiente día. El jugador puede ver el evento activo en todo momento desde el HUD.
+
+**Implementación (completada 2026-03-24):**
+- `Assets/Scripts/Data/DailyEventData.cs` — ScriptableObject completo con campos: `EventTitle`, `EventDescription`, `EventIcon`, `Type` (DailyEventType), `AffectedStat`, `StatModifier`, `AffectsAllStats` (bool para PlagueScare y similares), `SpawnSpeedModifier`, `FameModifier`, `SlotReductionAmount`.
+- `Assets/Scripts/Core/DailyEventManager.cs` — implementación completa. Singleton. Escucha `OnDayStart`; ejecuta `ClearEvent()` → `PickDailyEvent(day)` (sin repetir el del día anterior) → `ApplyEvent(ev)` → publica `OnDailyEventActivated`. Soporta los 7 tipos de `DailyEventType`. Expone `GetFameModifier()` (usado por FameManager).
+- `Assets/Scripts/Heroes/HeroQueue.cs` — añadidos `TotalSlots` (int, read-only) y `SlotOverride` (int, -1 = sin límite). `GetFreeSlot()` respeta el override para `SlotReduction`.
+- `Assets/Scripts/UI/DailyEventUI.cs` — componente UI listo para conectar en Tarea 4.1. Escucha `OnDailyEventActivated` y `OnDayEnd`. Muestra panel de anuncio (2s o click) y actualiza icono del HUD. Los GameObjects/referencias se asignan en Inspector en Tarea 4.1.
+- `Assets/Data/Events/` — 12 DailyEventData assets:
+  - Buffs: `Event_HeroFeast` (+3 STR), `Event_GuildRumors` (+20% Fama), `Event_TrainingDay` (+3 INT), `Event_FairWeather` (spawn 20% más rápido), `Event_MerchantBonus` (+3 CHA), `Event_SwiftHeroes` (+3 DEX).
+  - Debuffs: `Event_HeavyRain` (spawn 30% más lento), `Event_BadOmen` (-20% Fama), `Event_PlagueScare` (-2 a todos los stats), `Event_RivalGuild` (solo 3 slots), `Event_Hangover` (-3 STR), `Event_Gossip` (-3 CHA).
+- **Setup requerido:** Asignar `DailyEventManager` como componente en la escena. Arrastrar los 12 assets al array `_eventPool` en el Inspector. En Tarea 4.1, cablear `DailyEventUI` con los GameObjects del HUD.
+- **Nota Tarea 4.1:** `DailyEventUI` usa `UnityEngine.UI.Text`. Si el proyecto migra a TextMeshPro, cambiar los campos `_titleText`/`_descriptionText` a `TMP_Text`.
 
 ---
 
