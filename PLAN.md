@@ -7,11 +7,17 @@
 
 ## RESUMEN DEL JUEGO
 
-**Questline** es un juego de micromanagement con elementos roguelike donde el jugador administra una guild de héroes. Los héroes llegan aleatoriamente con stats generados proceduralmente. El jugador debe asignarles misiones arrastrando cartas, infiriendo qué estadística encaja mejor con la descripción de la misión. Los fallos matan al héroe y penalizan al jugador; demasiados fallos significan game over. Con monedas de propina se compran buffs y mejoras. Las runs se vuelven más fáciles de interpretar a medida que el jugador progresa.
+**Questline** es un juego de micromanagement con elementos roguelike donde el jugador administra una guild de héroes. Los héroes llegan aleatoriamente con stats generados proceduralmente. El jugador debe asignarles misiones arrastrando cartas, infiriendo qué estadística encaja mejor con la descripción de la misión. Los fallos matan al héroe y penalizan al jugador; demasiados fallos significan game over. Con monedas de propina se compran buffs, mejoras y pistas en la tienda inter-día.
 
 **Stats de héroe:** Fuerza · Destreza · Inteligencia · Carisma · XP
 **Mecánica core:** Drag & Drop de carta-misión a héroe
-**Roguelike loop:** Cada run desbloquea más pistas en las misiones + buffs acumulables
+**Vidas:** 3 vidas por día. Cada héroe que se va sin recibir misión = -1 vida. Perder las 3 = Game Over.
+**Fin de día:** El día termina al superar el umbral de Fama del día (Fama acumulada por misiones completadas).
+**Dificultad de misiones:** Sistema de rangos tipo naipe inglés — 12 niveles × 4 palos (un palo por stat = 48 misiones únicas totales). A mayor rango: mayores requisitos (calculados por fórmula) y mayor Fama y coins.
+**Progresión por días:** El pool diario escala el rango promedio con el número de día. Los stats de los héroes también escalan.
+**Eventos diarios:** Cada día hay un evento aleatorio con efecto positivo o negativo.
+**Pistas y consumibles:** Comprables en tienda. Consumibles de un solo uso: "Ver stats de la mano" (revela PrimaryStat de todas las cartas en mano) y "Revelar carta" (revela todos los stats de una misión específica).
+**Tutorial:** Sin texto; el jugador aprende fallando. La narrativa de loop se establece desde el Game Over inicial.
 
 ---
 
@@ -197,25 +203,33 @@ Implementar un EventBus estático para comunicación desacoplada entre sistemas.
    public class OnHeroArrived { public HeroData Hero; }
    public class OnHeroLeft { public HeroData Hero; public bool Rejected; }
    public class OnHeroDied { public HeroData Hero; }
-   public class OnMissionAssigned { public MissionData Mission; public HeroData Hero; }
-   public class OnMissionCompleted { public MissionData Mission; public HeroData Hero; public int CoinsEarned; }
-   public class OnMissionFailed { public MissionData Mission; public HeroData Hero; }
+   public class OnHeroArrived { public HeroInstance Hero; }
+   public class OnHeroLeft { public HeroInstance Hero; public bool WasAngry; }  // WasAngry=true → -1 vida
+   public class OnHeroDied { public HeroInstance Hero; }
+   public class OnLifeLost { public int LivesRemaining; }                        // Cada vez que un héroe se va sin misión
+   public class OnMissionAssigned { public MissionData Mission; public HeroInstance Hero; }
+   public class OnMissionCompleted { public MissionData Mission; public HeroInstance Hero; public int CoinsEarned; public int FameEarned; }
+   public class OnMissionFailed { public MissionData Mission; public HeroInstance Hero; }
    public class OnCoinEarned { public int Amount; }
    public class OnCoinSpent { public int Amount; }
-   public class OnFailPenalty { public int FailCount; public int MaxFails; }
-   public class OnGameOver { }
-   public class OnRunStart { public int RunNumber; }
-   public class OnRunEnd { public int RunNumber; public int Score; }
+   public class OnFameEarned { public int Amount; public int TotalFame; public int DayThreshold; }
+   public class OnDayThresholdReached { public int DayNumber; }
+   public class OnGameOver { public int DayReached; public int TotalFameEarned; }
+   public class OnDayStart { public int DayNumber; }
+   public class OnDayEnd { public int DayNumber; }
    public class OnBuffPurchased { public BuffData Buff; }
-   public class OnMissionsreshuffled { }
+   public class OnMissionsReshuffled { }
    public class OnMissionDiscarded { public MissionInstance Mission; }
+   public class OnDailyEventActivated { public DailyEventData Event; }
+   public class OnConsumableUsed { public ConsumableType Type; public MissionInstance TargetMission; }
    ```
 3. Crear `Assets/Scripts/Core/GameManager.cs`:
    - Singleton persistente (DontDestroyOnLoad)
-   - Mantiene el estado global: `RunNumber`, `FailCount`, `MaxFails`, `CurrentCoins`, `Score`
-   - Expone métodos: `StartRun()`, `EndRun()`, `RegisterFail()`, `AddCoins()`, `SpendCoins()`
-   - Escucha `OnHeroDied` para llamar `RegisterFail()`
-   - Al llegar a `MaxFails`, publica `OnGameOver`
+   - Mantiene el estado global: `DayNumber`, `DayLives` (= 3, reset cada día), `CurrentCoins`, `TotalFameEarned`
+   - Expone métodos: `StartDay()`, `EndDay()`, `LoseLife()`, `AddCoins()`, `SpendCoins()`
+   - Escucha `OnHeroLeft { WasAngry = true }` → llama `LoseLife()`
+   - `LoseLife()`: decrementa `DayLives`, publica `OnLifeLost { LivesRemaining }`. Si `DayLives <= 0` → publica `OnGameOver`
+   - Escucha `OnDayThresholdReached` → llama `EndDay()`, resetea `DayLives = 3`, incrementa `DayNumber`
 4. Probar con un test rápido en el editor: suscribirse a un evento, publicarlo, verificar que el handler se invoca.
 
 **Criterio de éxito:** El EventBus compila sin errores. Se puede publicar y recibir eventos entre dos scripts sin referencia directa.
@@ -244,15 +258,13 @@ Definir la estructura de datos de un héroe como ScriptableObject base y la clas
    public class HeroData : ScriptableObject {
        public string HeroName;
        public Sprite Portrait;
-       public HeroRarity Rarity; // Common, Rare, Epic, Boss
+       public HeroRarity Rarity; // Common, Rare, Epic
 
        // Rangos para generación aleatoria
        public Vector2Int StrengthRange;    // ej: (1, 10)
        public Vector2Int DexterityRange;
        public Vector2Int IntelligenceRange;
        public Vector2Int CharismaRange;
-       public Vector2Int XPRange;          // XP mínima que exige el héroe
-
        // Personalidad — afecta el timer de paciencia
        public float PatienceMultiplier;    // 0.5=impaciente, 2.0=muy paciente
        public float BasePatience;          // segundos base de espera
@@ -270,8 +282,6 @@ Definir la estructura de datos de un héroe como ScriptableObject base y la clas
        public int Dexterity;
        public int Intelligence;
        public int Charisma;
-       public int ExperienceLevel;    // nivel del héroe
-       public int MinMissionXP;       // XP mínima de misión que acepta
        public HeroRarity Rarity;
        public Sprite Portrait;
        public float Patience;         // segundos antes de irse
@@ -283,7 +293,7 @@ Definir la estructura de datos de un héroe como ScriptableObject base y la clas
        // Método de construcción
        public static HeroInstance Generate(HeroData template) { ... }
 
-       // Verifica si el héroe acepta una misión (stats y XP)
+       // Verifica si el héroe acepta una misión (siempre true en diseño actual — placeholder para futuras restricciones)
        public bool WillAcceptMission(MissionInstance mission) { ... }
 
        // Calcula probabilidad de éxito (0.0 a 1.0)
@@ -292,17 +302,31 @@ Definir la estructura de datos de un héroe como ScriptableObject base y la clas
    ```
 3. Crear `Assets/Scripts/Utils/Enums.cs` con:
    ```csharp
-   public enum HeroRarity { Common, Rare, Epic, Boss }
    public enum HeroStat { Strength, Dexterity, Intelligence, Charisma }
-   public enum MissionDifficulty { Easy, Normal, Hard, Extreme }
+   public enum HeroRarity { Common, Rare, Epic }
+
+   // Rango 1–12, tipo naipe inglés (A=1 hasta Q=12)
+   // A mayor rango: mayores requisitos (calculados por fórmula) y mayor Fama/coins
+   public enum MissionRank { R1=1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12 }
+
+   // Palo de la misión = stat primario. Los 4 palos × 12 rangos = 48 misiones únicas
+   // MissionSuit es alias semántico de HeroStat para contexto de misiones
+   // (En código se puede usar HeroStat directamente como palo)
+
    public enum BuffType { HeroStatBoost, MissionHintReveal, MissionReshuffle, PatienceBoost, FailProtection }
+   public enum DailyEventType { StatBuff, StatDebuff, SpawnSpeedBuff, SpawnSpeedDebuff, FameBoost, FameDebuff, SlotReduction }
+
+   // Tipos de consumibles de un solo uso (se usan desde el inventario del HUD)
+   public enum ConsumableType {
+       StatRevealHand,    // Revela el PrimaryStat de TODAS las cartas en la mano actual
+       FullStatReveal,    // Revela todos los requisitos (primario + secundarios) de UNA carta elegida
+   }
    ```
-4. Crear 4-6 HeroData ScriptableObjects de ejemplo en `Assets/Data/Heroes/`:
+4. Crear 4-5 HeroData ScriptableObjects de ejemplo en `Assets/Data/Heroes/`:
    - `Hero_Knight.asset` (Fuerza alta)
    - `Hero_Rogue.asset` (Destreza alta)
    - `Hero_Mage.asset` (Inteligencia alta)
    - `Hero_Bard.asset` (Carisma alto)
-   - `Hero_Boss_Dragon.asset` (Boss con stats extremos)
 5. Implementar el método `CalculateSuccessChance`:
    - Obtener el stat primario de la misión
    - Fórmula: `chance = (heroStat / missionRequirement).Clamp(0, 1)`
@@ -319,7 +343,7 @@ Definir la estructura de datos de un héroe como ScriptableObject base y la clas
 **Dependencias:** 1.1 (necesita Enums)
 
 **Descripción:**
-Definir la estructura de datos de una misión. Las misiones tienen requisitos ocultos (stat principal + secundarios), descripción de sabor ambigua, y dificultad escalable. También incluye el sistema de pistas progresivas del roguelike.
+Definir la estructura de datos de una misión. Las misiones tienen requisitos ocultos (stat principal + secundarios), descripción de sabor ambigua, y dificultad escalable. Las pistas son ítems comprables en la tienda o desbloqueables por eventos del juego (NO se desbloquean automáticamente por duración de run). Pueden ser permanentes o de un solo uso (por definir en balance).
 
 **Pasos:**
 1. Crear `Assets/Scripts/Data/MissionData.cs`:
@@ -330,68 +354,86 @@ Definir la estructura de datos de una misión. Las misiones tienen requisitos oc
        public string MissionTitle;
        [TextArea] public string Description;       // Descripción ambigua para el jugador
        public Sprite MissionArt;
-       public MissionDifficulty Difficulty;
+
+       [Header("Rango (sistema naipe inglés, 1–12)")]
+       public MissionRank Rank;                   // R1 = más fácil, R12 = más difícil
+       // El rango escala automáticamente los requisitos y las recompensas.
+       // Un héroe con stat promedio puede superar misiones hasta ~Rango 5–6.
+       // Rangos 7–12 requieren héroes con stats altos o buffs acumulados.
 
        [Header("Requisitos (OCULTOS al jugador)")]
-       public HeroStat PrimaryStat;               // El stat que más importa
-       public int PrimaryStatRequirement;         // Umbral mínimo recomendado
-       public HeroStat[] SecondaryStats;          // Stats de apoyo (opcionales)
-       public int[] SecondaryStatRequirements;
-       public int MinHeroLevel;                   // Nivel mínimo del héroe
+       // PrimaryStatRequirement NO se almacena aquí — se calcula en runtime por fórmula:
+       //   effectiveReq(rank, day) = (int)Rank * (1.5f + day * 0.2f)
+       // Ejemplo: Rank 4, Día 1 → req = 4*(1.7) = 6.8 ≈ 7
+       //          Rank 4, Día 5 → req = 4*(2.5) = 10
+       public HeroStat PrimaryStat;               // El palo de esta misión (Fuerza/Destreza/etc.)
+       public HeroStat[] SecondaryStats;          // Stats de apoyo (opcionales, 0-2)
+       // Secondary requirements = 80% del primary requirement del mismo día
 
-       [Header("Recompensas")]
-       public int CoinsReward;                    // Propina base al completar
-       public int XPReward;                       // XP que gana el héroe
-       public int ScoreReward;                    // Puntos para el marcador
+       [Header("Recompensas (escalan con Rank — base configurada en DayConfig)")]
+       public int CoinsReward;                    // Propina base (Rank * 3 coins aprox.)
+       public int FameReward;                     // Fama base (Rank * 5 aprox.)
 
-       [Header("Pistas progresivas (Roguelike)")]
-       // Pistas que se revelan según el nivel de progreso del jugador
-       public MissionHint[] Hints;                // Array de pistas con nivel de desbloqueo
+       [Header("Pistas (desbloqueables por tienda o eventos)")]
+       // Las pistas NO se revelan automáticamente; se compran en la tienda
+       // o se otorgan como reward de eventos en el juego
+       public MissionHint[] Hints;                // Array de pistas disponibles para esta misión
 
-       [Header("Flags especiales")]
-       public bool IsBossMission;                 // Requiere héroe Boss
-       public float TimeLimitMultiplier;          // 1.0 = normal, 0.5 = urgente
    }
 
    [System.Serializable]
    public class MissionHint {
        public string HintText;        // ej: "Fuerza++" o "Inteligencia"
        public Color HintColor;        // Verde=bueno, Naranja=precaución
-       public int UnlockAtRunLevel;   // A partir de qué run se muestra
        public HeroStat RelatedStat;   // Stat al que hace referencia
+       // Sin UnlockAtRunLevel: las pistas se activan por compra en tienda o por eventos
    }
    ```
 2. Crear `Assets/Scripts/Missions/MissionInstance.cs`:
    ```csharp
    public class MissionInstance {
        public MissionData Template;
+       public int DayNumber;              // Día en que fue generada (afecta el requirement calculado)
        public bool IsCompleted;
        public bool IsFailed;
-       public int CurrentRunLevel;   // Para filtrar qué hints mostrar
+       public List<int> RevealedHintIndices;  // Índices de pistas actualmente visibles
 
-       // Devuelve solo las pistas desbloqueadas para el run actual
-       public List<MissionHint> GetRevealedHints(int runLevel) { ... }
+       // Requisito calculado por fórmula (no hardcodeado en el SO)
+       public int GetEffectivePrimaryReq()
+           => Mathf.RoundToInt((int)Template.Rank * (1.5f + DayNumber * 0.2f));
+       public int GetEffectiveSecondaryReq()
+           => Mathf.RoundToInt(GetEffectivePrimaryReq() * 0.8f);
+
+       // Revela una pista específica (llamado por consumible o evento)
+       public void RevealHint(int hintIndex) { ... }
+
+       // Devuelve las pistas actualmente reveladas
+       public List<MissionHint> GetRevealedHints() { ... }
 
        // Fábrica
-       public static MissionInstance FromData(MissionData data, int runLevel) { ... }
+       public static MissionInstance FromData(MissionData data, int dayNumber) { ... }
    }
    ```
-3. Crear mínimo 15 MissionData ScriptableObjects en `Assets/Data/Missions/`:
-   - 5 misiones Fáciles (stat evidente en la descripción si eres observador)
-   - 5 misiones Normales (stat ambiguo)
-   - 3 misiones Difíciles (descripción engañosa)
-   - 2 misiones de Boss
+3. Crear **48 MissionData ScriptableObjects** en `Assets/Data/Missions/` — 4 por rango (uno por stat/palo):
+   - Estructura: `Mission_R{rango}_{Stat}.asset` → ej: `Mission_R1_Str.asset`, `Mission_R1_Dex.asset`, etc.
+   - Rangos 1–4: descripción bastante directa (para días 1–2)
+   - Rangos 5–8: descripción ambigua (para días 3–5)
+   - Rangos 9–12: descripción engañosa o con múltiples lecturas (para días 6+)
+   - `FameReward` base: `rank * 5` coins (Rango 1 = 5, Rango 12 = 60). Ajustar en balance.
+   - `CoinsReward` base: `rank * 3` (Rango 1 = 3, Rango 12 = 36). Ajustar en balance.
+   - Nota: las 48 misiones constituyen el catálogo completo del juego, equivalente a un naipe inglés.
 
    **Ejemplos de descripción ambigua:**
    - *"El Bosque Sombrío necesita a alguien que pueda moverse sin ser visto entre las sombras."* → PrimaryStat: Destreza
    - *"Los comerciantes del puerto necesitan convencer a un noble corrupto."* → PrimaryStat: Carisma
    - *"Una antigua cripta ha sido profanada. Alguien debe descifrar los sellos arcanos."* → PrimaryStat: Inteligencia
    - *"Los muros de Ironhaven se están derrumbando. Se necesita mano de obra pesada."* → PrimaryStat: Fuerza
-4. Para cada misión, diseñar al menos 2 pistas:
-   - Pista 1: se desbloquea en run 2 (texto vago, ej: "Requiere habilidad física")
-   - Pista 2: se desbloquea en run 4 (texto directo, ej: "Fuerza ++", color verde)
+4. Para cada misión, diseñar al menos 2 pistas (que el jugador puede comprar en tienda):
+   - Pista 1: vaga (ej: "Requiere habilidad física") — costo bajo en tienda
+   - Pista 2: directa (ej: "Fuerza ++", color verde) — costo mayor en tienda
+   - Las pistas también pueden otorgarse como recompensa de eventos aleatorios del juego
 
-**Criterio de éxito:** Se puede crear una MissionInstance desde cualquier MissionData. `GetRevealedHints(runLevel)` filtra correctamente según el nivel de run.
+**Criterio de éxito:** Se puede crear una MissionInstance desde cualquier MissionData. `GetRevealedHints()` devuelve solo las pistas marcadas como reveladas. Las pistas inician ocultas y solo se revelan al activarlas explícitamente. El `FameReward` de misiones de Rango alto es notablemente mayor que el de Rango bajo.
 
 ---
 
@@ -418,29 +460,70 @@ Definir la estructura de los buffs comprables con monedas. Los buffs son el cora
 
        // Según el tipo:
        public HeroStat AffectedStat;        // Para HeroStatBoost
-       public int StatBoostAmount;          // +N al stat
-       public int HintRunLevelBonus;        // Para MissionHintReveal (reduce el nivel de unlock)
+       public int StatBoostAmount;          // +N al stat (permanente mientras dure la partida)
+       public int HintsToReveal;            // Para MissionHintReveal: cuántas pistas revela al usarse
        public float PatienceBoostPercent;   // Para PatienceBoost
-       public int FailProtectionCount;      // Para FailProtection (absorbe N fallos)
+       public int FailProtectionCount;      // Para FailProtection (absorbe N muertes de héroe)
    }
    ```
-2. Crear los siguientes buffs en `Assets/Data/Buffs/`:
+
+   **Consumibles (inventario de un solo uso — no BuffData, sino ConsumableData):**
+   ```csharp
+   [CreateAssetMenu(menuName = "Questline/Consumable")]
+   public class ConsumableData : ScriptableObject {
+       public string Name;
+       [TextArea] public string Description;
+       public Sprite Icon;
+       public int Cost;
+       public ConsumableType Type;
+       // StatRevealHand: no necesita parámetros extra
+       // FullStatReveal: tampoco — el jugador elige la carta al usarlo
+   }
+   ```
+
+2. Crear los siguientes items en `Assets/Data/Buffs/` y `Assets/Data/Consumables/`:
+
+   **Buffs permanentes (tienda):**
    - `Buff_StrBoost.asset` — +3 Fuerza a todos los héroes, costo: 5 coins
    - `Buff_DexBoost.asset` — +3 Destreza a todos los héroes, costo: 5 coins
    - `Buff_IntBoost.asset` — +3 Inteligencia a todos los héroes, costo: 5 coins
    - `Buff_ChaBoost.asset` — +3 Carisma a todos los héroes, costo: 5 coins
    - `Buff_Patience.asset` — +50% tiempo de paciencia, costo: 8 coins
-   - `Buff_HintReveal.asset` — Desbloquea pistas 1 run antes, costo: 10 coins
-   - `Buff_Reshuffle.asset` — Baraja de nuevo las misiones disponibles, costo: 3 coins
-   - `Buff_FailSave.asset` — Absorbe 1 fallo (héroe sobrevive), costo: 15 coins
+   - `Buff_HintReveal.asset` — Al usarse: revela el PrimaryStat de una misión aleatoria en mano, costo: 6 coins
+   - `Buff_Reshuffle.asset` — Baraja de nuevo el pool diario + roba nueva mano, costo: 3 coins
+   - `Buff_FailSave.asset` — Absorbe 1 muerte de héroe (el héroe falla pero no cuenta como vida perdida), costo: 12 coins
    - `Buff_MegaBoost.asset` — +10 a un stat aleatorio de todos los héroes, costo: 20 coins
+
+   **Consumibles de un solo uso (tienda → inventario HUD):**
+   - `Consumable_StatRevealHand.asset` — Revela el PrimaryStat de TODAS las cartas en mano en este momento, costo: 8 coins
+   - `Consumable_FullStatReveal.asset` — Revela TODOS los requisitos (primario + secundarios) de UNA carta a elección, costo: 15 coins
+
 3. Crear `Assets/Scripts/Core/BuffManager.cs`:
-   - Mantiene lista de buffs activos para la run
-   - `ApplyBuff(BuffData buff)` — aplica el efecto del buff
-   - `GetActiveStatBonus(HeroStat stat)` — suma total de bonus de ese stat
-   - `GetCurrentHintLevelBonus()` — bonus de revelación de pistas
-   - `GetPatienceMultiplier()` — multiplicador de paciencia acumulado
-   - `HasFailProtection()` y `ConsumeFailProtection()`
+   ```csharp
+   // DOS capas separadas:
+   List<BuffData> _permanentBuffs;     // comprados en tienda, persisten toda la partida
+   List<StatModifier> _dailyModifiers; // del evento del día, se limpian al inicio de cada día
+
+   struct StatModifier { public HeroStat Stat; public int Amount; }
+
+   // API pública:
+   void ApplyBuff(BuffData buff);                     // para tienda
+   void ApplyDailyModifier(HeroStat stat, int amount); // para DailyEventManager
+   void ClearDailyModifiers();                         // llamado por RunManager en StartDay()
+   int  GetActiveStatBonus(HeroStat stat);             // suma ambas capas
+   float GetPatienceMultiplier();
+   bool  HasFailProtection();
+   void  ConsumeFailProtection();
+   ```
+
+4. Crear `Assets/Scripts/Core/ConsumableManager.cs`:
+   - Mantiene el inventario de consumibles del jugador (`Dictionary<ConsumableType, int>` cantidad por tipo)
+   - `AddConsumable(ConsumableData)` — llamado al comprarlo en la tienda
+   - `UseConsumable(ConsumableType, MissionInstance targetMission = null)`:
+     - `StatRevealHand`: itera todas las `MissionCard` en la mano, llama `RevealHint(0)` en cada una (la pista de PrimaryStat)
+     - `FullStatReveal`: llama `RevealHint(0)` y `RevealHint(1)` en la `targetMission` elegida por el jugador
+   - Publica `OnConsumableUsed`
+   - El inventario del HUD (TAREA 4.1) se subscribe a los cambios del ConsumableManager
 
 **Criterio de éxito:** Los buffs se pueden crear en el editor. `BuffManager.ApplyBuff` modifica los valores correctamente.
 
@@ -474,46 +557,83 @@ Implementar la lógica central de resolución de misiones: dada una misión y un
 
    public class MissionResult {
        public bool Success;
-       public bool ProtectionUsed;    // Si el buff absorbió el fallo
+       public bool ProtectionUsed;    // Si el buff absorbió la muerte del héroe
        public float SuccessChance;    // Para mostrar en UI de post-misión
        public int CoinsEarned;
+       public int FameEarned;         // Ya incluye el multiplicador del evento del día
        public int XPEarned;
-       public int ScoreEarned;
        public HeroInstance Hero;
        public MissionInstance Mission;
    }
    ```
 2. La fórmula de éxito detallada:
    ```
-   effectiveStat = hero.PrimaryStat + BuffManager.GetActiveStatBonus(primaryStat)
-   baseChance    = Mathf.Clamp01(effectiveStat / mission.PrimaryStatRequirement)
-   bonusChance   = 0
+   effectiveStat    = hero.PrimaryStat + BuffManager.GetActiveStatBonus(primaryStat)
+   effectiveReq     = mission.GetEffectivePrimaryReq()   // calculado por fórmula en MissionInstance
+   baseChance       = Mathf.Clamp01(effectiveStat / effectiveReq)
+   bonusChance      = 0
+   secondaryReq     = mission.GetEffectiveSecondaryReq()
    foreach secondaryStat:
-       if hero.secondaryStat >= mission.secondaryRequirement:
+       if hero.secondaryStat >= secondaryReq:
            bonusChance += 0.05f
    finalChance = Mathf.Clamp01(baseChance + bonusChance)
    success = Random.value <= finalChance
+
+   // Recompensas — FameModifier aplicado aquí (Opción A: antes de publicar el evento)
+   float fameModifier = DailyEventManager.GetFameModifier()  // 1.0 por defecto
+   result.FameEarned  = Mathf.RoundToInt(mission.Template.FameReward * fameModifier)
+   result.CoinsEarned = mission.Template.CoinsReward
    ```
 3. Manejo de rechazo de misión por el héroe:
    ```
    hero.WillAcceptMission(mission):
-       return mission.XPReward >= hero.MinMissionXP
-              && mission.MinHeroLevel <= hero.ExperienceLevel
+       return true   // En diseño actual los héroes aceptan cualquier misión asignada
    ```
 4. Escribir tests manuales en un MonoBehaviour de prueba:
    - Héroe con Fuerza 10 vs misión que requiere Fuerza 8 → alta probabilidad de éxito
    - Héroe con Fuerza 3 vs misión que requiere Fuerza 8 → baja probabilidad
-   - Héroe nivel 1 vs misión que requiere nivel 5 → rechazo
 5. Publicar eventos al terminar:
-   - Éxito → `EventBus.Publish(new OnMissionCompleted {...})`
+   - Éxito → `EventBus.Publish(new OnMissionCompleted { CoinsEarned, FameEarned })` — FameEarned ya incluye el modificador del evento del día
    - Fallo → `EventBus.Publish(new OnMissionFailed {...})` → si no hay protección, `EventBus.Publish(new OnHeroDied {...})`
+   - Todas las misiones tienen peso de fallo = 1. No hay penalizaciones dobles.
 
 **Criterio de éxito:** `MissionEvaluator.Evaluate` devuelve resultados estadísticamente coherentes. Los eventos se publican correctamente.
 
 ---
 
+## GAME LOOP — ESTRUCTURA DE UN DÍA
+> Esta sección describe el loop definitivo acordado por el equipo. Es la referencia de diseño para todas las tareas de Fase 2 y 3.
+
+**Un "día" en Questline funciona así:**
+
+1. **Inicio del día:** Se revela el **Evento del Día** (buff o debuf aleatorio que dura todo el día). El jugador empieza con **3 vidas**. Se genera el pool diario de misiones desde el catálogo de 48 (12 rangos × 4 palos), con rangos escalados por número de día.
+2. **La mano del jugador:** El jugador tiene en mano un número limitado de cartas (ej: 5). Las cartas vienen del pool diario. A medida que el jugador asigna misiones, la mano se rellena automáticamente desde el pool.
+3. **Presión:** Los héroes llegan continuamente con timers de paciencia. Cada héroe que se va sin recibir misión = **-1 vida**. Si el jugador deja acumular demasiados héroes esperando simultáneamente, no puede asignar misiones a todos a tiempo.
+4. **Asignación:** El jugador asigna misiones de su mano a los héroes disponibles mediante drag & drop. Cada misión exitosa otorga **Fama** a la guild (además de coins).
+5. **Fin del día — Victoria:** Cuando la **Fama acumulada supera el umbral del día**, el día termina exitosamente. → Tienda inter-día.
+6. **Fin del día — Game Over:** Si el jugador pierde las **3 vidas** antes de alcanzar el umbral de Fama, es Game Over.
+7. **Entre días — Tienda:** Al completar el día, el jugador accede a la tienda para gastar coins en buffs y consumibles.
+8. **Nuevo día:** Las vidas se resetean a 3. Se genera un pool nuevo con mayor dificultad. Coins y buffs persisten.
+
+```
+[3 vidas al inicio]  [Evento del Día revelado]
+        ↓
+[Pool diario: subset escalado del catálogo de 48 misiones]
+        ↓ (roba automáticamente a la mano de 5)
+  [Héroe llega → timer de paciencia comienza]
+        ↓ (drag & drop antes de que expire)
+  [Héroe recibe misión → Evaluación → coins + Fama]
+        ↓
+  [¿Héroe se fue sin misión? → -1 vida]
+        ↓
+  Fama >= umbral → [Tienda] → Nuevo día (+dificultad)
+  Vidas = 0 → [Game Over]
+```
+
+---
+
 ## FASE 2 — LOOP DE GAMEPLAY
-**Objetivo:** Implementar la cola de héroes, el mazo de misiones, el drag & drop de cartas, y los timers de paciencia. Esto es el corazón jugable del juego.
+**Objetivo:** Implementar la cola de héroes, el mazo de misiones (pool diario + mano), el drag & drop de cartas, y los timers de paciencia. Esto es el corazón jugable del juego.
 **Duración:** Día 2 (tarde) – Día 3
 
 ---
@@ -527,11 +647,14 @@ Implementar la lógica central de resolución de misiones: dada una misión y un
 **Descripción:**
 Implementar el sistema que gestiona la llegada de héroes, los 4 slots visibles simultáneos, y el timer de paciencia por héroe. Cuando el timer expira, el héroe se va (no muere, pero se pierde la oportunidad). Si el jugador asigna una misión, el slot se libera.
 
+**Mecánica de vidas:** Cada héroe que pierde la paciencia y se va sin recibir misión cuesta **1 vida**. El jugador tiene **3 vidas por día** (se resetean al inicio de cada día). Perder las 3 vidas = Game Over. No hay contador intermedio ni acumulación entre días — cada día es independiente.
+
 **Pasos:**
 1. Crear `Assets/Scripts/Heroes/HeroSpawner.cs`:
    - Referencia al array de `HeroData` templates disponibles
-   - `SpawnHero()` — elige un template aleatorio, genera un `HeroInstance`, lo agrega a la cola
-   - Controla el intervalo entre llegadas (configurable, ej: cada 15 segundos en día 1, más rápido en días posteriores)
+   - `SpawnHero()` — elige un template aleatorio, genera un `HeroInstance` con stats escalados por `DayNumber`, lo agrega a la cola
+   - `SpawnIntervalMultiplier = 1.0f` — modificado por `DailyEventManager` para eventos de velocidad de spawn
+   - Intervalo efectivo: `SpawnIntervalBase * SpawnIntervalMultiplier` (clampeado a `SpawnIntervalMin`)
    - Publica `OnHeroArrived`
 2. Crear `Assets/Scripts/Heroes/HeroQueue.cs`:
    - Mantiene lista de hasta 4 `HeroInstance` activos
@@ -543,7 +666,8 @@ Implementar el sistema que gestiona la llegada de héroes, los 4 slots visibles 
    - `MaxPatience` en segundos (del HeroData × BuffManager.GetPatienceMultiplier())
    - Timer que cuenta hacia abajo
    - Eventos visuales: barra de paciencia cambia de color (verde → amarillo → rojo)
-   - Al llegar a 0: héroe se va, publica `OnHeroLeft { Rejected = false }`
+   - Al llegar a 0: héroe se va enojado, publica `OnHeroLeft { WasAngry = true }`
+   - `GameManager` escucha `OnHeroLeft { WasAngry = true }` y llama `LoseLife()` directamente
    - Al impaciencia < 20%: reproducir animación de nerviosismo
 4. Crear `Assets/Scripts/Heroes/HeroSlotUI.cs`:
    - Muestra el retrato del héroe
@@ -555,28 +679,40 @@ Implementar el sistema que gestiona la llegada de héroes, los 4 slots visibles 
    - `SpawnIntervalBase`: 15 segundos
    - `SpawnIntervalMin`: 5 segundos (en días avanzados)
    - `MaxSimultaneousHeroes`: 4
-   - Lista de HeroData disponibles con pesos de probabilidad
+   - Lista de HeroData disponibles (todos los héroes son del mismo tipo base con stats variables)
+   - Stats de héroes generados escalan con `DayNumber` usando esta fórmula:
+     ```
+     heroStat = Random.Range(2 + dayNumber, 5 + dayNumber * 2)
+     // Día 1: [3, 7]   Día 5: [7, 15]   Día 10: [12, 25]
+     ```
+   - Misión Rank R en Día N tiene requisito: `R * (1.5f + N * 0.2f)`
+     ```
+     // Día 1 R4: 4*1.7=6.8≈7  →  héroe avg 5 → 71% ✓
+     // Día 5 R7: 7*2.5=17.5   →  héroe avg 11 → 63% ✓
+     // Día 5 R12: 12*2.5=30   →  héroe avg 11 → 37% (muy difícil, correcto)
+     ```
 
 **Criterio de éxito:** Los héroes aparecen en pantalla, tienen barras de paciencia que se agotan, y desaparecen solos si no reciben misión.
 
 ---
 
-### TAREA 2.2 — MissionDeck: mazo y mano de misiones
+### TAREA 2.2 — MissionDeck: pool diario y mano de misiones
 **Estado:** `[ ]`
 **Responsable:** Dev D
 **Duración estimada:** 2 horas
 **Dependencias:** 1.2, 0.4
 
 **Descripción:**
-Implementar el mazo de misiones y la mano visible del jugador. El jugador siempre tiene un número fijo de cartas en mano (ej: 5). Al asignar una carta, se roba una nueva del mazo.
+Implementar el pool de misiones diarias y la mano visible del jugador. Cada día se genera un pool finito de misiones. El jugador tiene una mano de N cartas que se rellena desde el pool a medida que asigna misiones. Al agotarse el pool, el día termina. Esta es la estructura del Game Loop acordada por el equipo.
 
 **Pasos:**
 1. Crear `Assets/Scripts/Missions/MissionDeck.cs`:
    - Lista de todos los `MissionData` disponibles (asignados desde el Inspector)
-   - `BuildDeck()` — crea la lista shuffleada de `MissionInstance`
-   - `DrawCard()` → devuelve una `MissionInstance` del tope del mazo
-   - `Reshuffle()` — desordena el mazo de nuevo (buff de reshuffle)
+   - `BuildDailyPool(int dayNumber)` — genera el pool del día: subset shuffleado de misiones disponibles, escalado por día (más misiones difíciles en días avanzados)
+   - `DrawCard()` → devuelve una `MissionInstance` del tope del pool; devuelve null si el pool está vacío
+   - `Reshuffle()` — desordena el pool restante (buff de reshuffle)
    - `HandSize`: cuántas cartas tiene el jugador en mano (default: 5)
+   - `DailyPoolSize`: total de misiones disponibles en el pool del día (configurable, ej: 15-20)
    - Mantiene la lista de cartas en mano actual
 2. Crear `Assets/Scripts/Missions/MissionCard.cs` (MonoBehaviour UI):
    - Muestra: título, descripción, dificultad, recompensas
@@ -657,37 +793,57 @@ Implementar el sistema de drag and drop que permite arrastrar una carta de misi�
 **Dependencias:** 0.4, 2.1, 2.2
 
 **Descripción:**
-Implementar la lógica de progresión por días/runs. Cada run tiene una duración (ej: 2 minutos o hasta que se cumpla una condición), al terminar se muestra un resumen y se ofrece el shop de buffs.
+Implementar la lógica de progresión por días. Cada día termina cuando la **Fama acumulada supera el umbral del día**. La Fama se gana completando misiones (más Fama por misiones de mayor rango). A mayor día, mayor es el umbral y mayor el rango promedio de misiones disponibles.
 
 **Pasos:**
 1. Crear `Assets/Scripts/Core/RunManager.cs`:
-   - Mantiene `RunNumber` (incrementa cada run)
-   - `RunDuration` en segundos (ej: 120s para la primera run, crece)
-   - Timer de run
-   - Al terminar el tiempo: pausa el juego, publica `OnRunEnd`
-   - `StartRun()`: inicializa el mazo, spawner, timer; publica `OnRunStart`
-2. Condiciones de fin de run:
-   - Timer llega a 0 (fin normal)
+   - Mantiene `DayNumber` (incrementa cada día)
+   - `StartDay()`: inicializa el pool diario (escalado por DayNumber), activa el evento del día, publica `OnRunStart`
+   - Escucha `OnFameEarned` y verifica si `TotalFame >= DayFameThreshold`
+   - Al superarse el umbral: pausa el juego, publica `OnDayThresholdReached` → transición a tienda
    - `FailCount >= MaxFails` → publica `OnGameOver`
-3. Pantalla de fin de run (inter-run):
-   - Mostrar score de la run
-   - Mostrar cuántos héroes sobrevivieron vs murieron
-   - Mostrar coins ganadas
-   - Transición a la pantalla de shop (ver Fase 3)
-4. Escalado por run (configurable en Inspector):
-   ```
-   Run 1: MaxFails=3, SpawnInterval=15s, RunDuration=90s
-   Run 2: MaxFails=3, SpawnInterval=13s, RunDuration=100s
-   Run 3: MaxFails=4, SpawnInterval=11s, RunDuration=110s
-   ...
-   ```
-5. Persistencia entre runs:
-   - `RunNumber` persiste en GameManager
-   - `CurrentCoins` persiste (no se resetea entre runs)
-   - Buffs comprados persisten en `BuffManager`
-   - Stats de héroes NO persisten (se generan de nuevo cada run)
 
-**Criterio de éxito:** El juego avanza por runs, el timer funciona, las condiciones de fin se cumplen correctamente.
+2. Crear `Assets/Scripts/Core/FameManager.cs`:
+   - Mantiene `CurrentFame` (se resetea al inicio de cada día)
+   - `DayFameThreshold(int dayNumber)` — calcula el umbral del día:
+     ```csharp
+     // Ejemplo de curva (ajustar en balance):
+     // Día 1: 50 Fama  |  Día 3: 120 Fama  |  Día 5: 200 Fama
+     int DayFameThreshold(int day) => 30 + (day * 20);  // placeholder
+     ```
+   - Escucha `OnMissionCompleted` → suma `FameEarned` al contador
+   - Publica `OnFameEarned { Amount, TotalFame, DayThreshold }`
+   - El HUD escucha `OnFameEarned` para actualizar la barra de Fama
+
+3. `DayConfig` — **un único ScriptableObject** con `AnimationCurve`s editables en el Inspector:
+   ```csharp
+   [CreateAssetMenu(menuName = "Questline/Day Config")]
+   public class DayConfig : ScriptableObject {
+       // X = DayNumber, Y = valor
+       public AnimationCurve FameThresholdCurve;   // Día 1→50, Día 5→200, Día 10→500
+       public AnimationCurve MinRankCurve;          // Día 1→1,  Día 5→4,   Día 10→8
+       public AnimationCurve MaxRankCurve;          // Día 1→4,  Día 5→9,   Día 10→12
+       public AnimationCurve SpawnIntervalCurve;    // Día 1→15s,Día 5→10s, Día 10→6s
+
+       public int   GetFameThreshold(int day)   => Mathf.RoundToInt(FameThresholdCurve.Evaluate(day));
+       public int   GetMinRank(int day)          => Mathf.RoundToInt(MinRankCurve.Evaluate(day));
+       public int   GetMaxRank(int day)          => Mathf.RoundToInt(MaxRankCurve.Evaluate(day));
+       public float GetSpawnInterval(int day)    => SpawnIntervalCurve.Evaluate(day);
+   }
+   ```
+   Las curvas se editan visualmente en el Inspector de Unity. Ideal para iterar balance sin tocar código.
+   > ⚠️ **BALANCE PENDIENTE:** Revisar curvas en TAREA 5.3 (playtest).
+
+4. Persistencia entre días:
+   - `DayNumber` persiste en GameManager (incrementa al completar día)
+   - `DayLives` se **resetea a 3** al inicio de cada día
+   - `CurrentCoins` persiste (no se resetea entre días)
+   - Buffs permanentes persisten en `BuffManager`
+   - Modificadores diarios de `BuffManager._dailyModifiers` se limpian via `ClearDailyModifiers()`
+   - `CurrentFame` se resetea a 0 al inicio de cada día
+   - Stats de héroes NO persisten (se generan de nuevo cada día con la fórmula escalada)
+
+**Criterio de éxito:** El día termina al superar el umbral de Fama (victoria) o al llegar a 0 vidas (Game Over). El pool refleja el rango correcto del día. Las vidas se resetean correctamente entre días.
 
 ---
 
@@ -788,14 +944,29 @@ Implementar la pantalla de tienda que aparece entre runs. El jugador puede gasta
 
 **Pasos:**
 1. Crear `Assets/Scripts/Economy/ShopManager.cs`:
-   - Pool de todos los `BuffData` disponibles
-   - Cada vez que se abre el shop: seleccionar 3 buffs aleatorios para mostrar (sin repetir los ya comprados)
+   - Dos pools separados: `List<BuffData> _buffPool` y `List<ConsumableData> _consumablePool`
+   - Cada vez que se abre el shop: seleccionar **3 ítems aleatorios del pool combinado** para mostrar. ⚠️ **BALANCE PENDIENTE:** Puede subir a 5 en TAREA 5.3.
    - `PurchaseBuff(BuffData buff)`:
-     - Verificar si el jugador tiene suficientes coins
-     - Llamar `CoinJar.SpendCoins(buff.Cost)`
-     - Llamar `BuffManager.ApplyBuff(buff)`
-     - Publicar `OnBuffPurchased`
+     - Verificar coins → `CoinJar.SpendCoins(buff.Cost)` → `BuffManager.ApplyBuff(buff)` → `OnBuffPurchased`
+   - `PurchaseConsumable(ConsumableData consumable)`:
+     - Verificar coins → `CoinJar.SpendCoins(consumable.Cost)` → `ConsumableManager.AddConsumable(consumable)` → `OnBuffPurchased`
+     - El consumible va al inventario del HUD; se usa durante el gameplay, no en la tienda
    - `SkipShop()` — el jugador puede saltar la tienda sin comprar nada
+
+   **Cadena completa de consumibles (definida aquí para que todos los devs la conozcan):**
+   ```
+   [Tienda] PurchaseConsumable()
+        → ConsumableManager.AddConsumable()  → inventario HUD actualizado
+        → [Jugador hace click en consumible del HUD durante gameplay]
+        → ConsumableManager.UseConsumable(type, targetMission?)
+             StatRevealHand: foreach card in MissionCardArea.Hand
+                                → card.MissionInstance.RevealHint(0)  // pista del PrimaryStat
+                                → card.RefreshUI()
+             FullStatReveal: targetMission.RevealHint(0) + RevealHint(1)
+                                → MissionCard.RefreshUI()
+        → EventBus.Publish(OnConsumableUsed)
+        → ConsumableManager descuenta 1 del inventario
+   ```
 2. UI del shop (panel que aparece sobre el gameplay):
    - Título: "El Tablón de Buffs" o "Mejoras de Guild"
    - 3 cartas de buff mostrando: icono, nombre, descripción, costo en coins
@@ -815,68 +986,107 @@ Implementar la pantalla de tienda que aparece entre runs. El jugador puede gasta
 
 ---
 
-### TAREA 3.3 — Sistema de pistas progresivas
+### TAREA 3.3 — FameManager: fama, umbrales y fin de día
 **Estado:** `[ ]`
 **Responsable:** Dev B
-**Duración estimada:** 1 hora
-**Dependencias:** 1.2, 2.2, 2.4, 3.2
+**Duración estimada:** 1.5 horas
+**Dependencias:** 0.4, 2.4
 
 **Descripción:**
-Conectar el nivel de run actual con el sistema de revelación de pistas en las cartas de misión. A mayor número de run, más pistas visibles. El buff `HintReveal` reduce el nivel requerido para desbloquear pistas.
+Gestionar la Fama acumulada en la partida y los umbrales de victoria por día. FameManager es el árbitro del fin de día exitoso: cuando la Fama supera el umbral del día en curso, publica `OnDayThresholdReached` y el RunManager cierra el día y abre la tienda.
 
 **Pasos:**
-1. En `MissionInstance.GetRevealedHints(runLevel)`:
-   - Filtrar `hints` cuyo `UnlockAtRunLevel <= runLevel + BuffManager.GetCurrentHintLevelBonus()`
-   - Devolver la lista filtrada
-2. En `MissionCard.cs`, al renderizar la carta:
-   - Llamar `GetRevealedHints(RunManager.CurrentRunNumber)`
-   - Si hay pistas: mostrar área de pistas debajo de la descripción
-   - Cada pista se muestra con su color (verde para stat bueno, naranja para precaución)
-   - Pistas ocultas: mostrar ??? o espacio vacío para que el jugador sepa que HAY pistas sin revelarlas
-3. Efecto visual al desbloquear una nueva pista (cuando el run avanza):
-   - Al inicio de un run, si hay nuevas pistas desbloqueadas: breve animación de "revelación" en las cartas
-4. Balance de diseño de pistas:
-   - Run 1: sin pistas (solo título + descripción ambigua)
-   - Run 2: pistas vagas ("Requiere habilidad física")
-   - Run 3: pistas más claras ("Stat físico importante")
-   - Run 4+: pistas directas ("Fuerza ++") con color
+1. Crear `Assets/Scripts/Economy/FameManager.cs`:
+   ```csharp
+   public class FameManager : MonoBehaviour {
+       public int TotalFame { get; private set; }
+       public int DayFame { get; private set; }   // Fama acumulada solo en el día actual
 
-**Criterio de éxito:** En la run 1 no hay pistas. En runs posteriores, las pistas aparecen progresivamente. El buff de HintReveal funciona.
+       // Umbral de Fama para superar el día actual
+       // fórmula: dayThreshold(day) = DayConfig.FameThresholdCurve.Evaluate(day)
+       // (AnimationCurve en DayConfig — ajustable en Inspector sin recompilar)
+       public int GetDayThreshold(int dayNumber) { ... }
+
+       void OnEnable()  => EventBus.Subscribe<OnMissionCompleted>(OnMissionCompleted);
+       void OnDisable() => EventBus.Unsubscribe<OnMissionCompleted>(OnMissionCompleted);
+
+       void OnMissionCompleted(OnMissionCompleted e) {
+           TotalFame += e.FameEarned;
+           DayFame   += e.FameEarned;
+           EventBus.Publish(new OnFameEarned { Amount = e.FameEarned, TotalFame = TotalFame,
+                                               DayThreshold = GetDayThreshold(GameManager.Instance.DayNumber) });
+           if (DayFame >= GetDayThreshold(GameManager.Instance.DayNumber))
+               EventBus.Publish(new OnDayThresholdReached { DayNumber = GameManager.Instance.DayNumber });
+       }
+
+       public void ResetDayFame() => DayFame = 0;   // llamado por RunManager en StartDay()
+   }
+   ```
+2. Agregar `FameThresholdCurve` a `DayConfig` (ScriptableObject de TAREA 2.4):
+   - Curva sugerida de inicio: día 1 → 50 Fama, día 2 → 90, día 3 → 140, etc.
+   - Ajustar en TAREA 5.3 (balance)
+3. `RunManager.StartDay()` debe llamar `FameManager.ResetDayFame()` al inicio de cada día.
+4. Verificar en el HUD (TAREA 4.1) que la barra de Fama usa `FameManager.DayFame` y `GetDayThreshold()`.
+
+**Criterio de éxito:** Completar misiones acumula Fama. Al superar el umbral del día se publica `OnDayThresholdReached`. El umbral es distinto para cada día y editable en el Inspector sin recompilar.
 
 ---
 
-### TAREA 3.4 — Sistema de Boss Héroes y misiones boss
+### TAREA 3.4 — Sistema de Eventos Diarios
 **Estado:** `[ ]`
 **Responsable:** Dev A
-**Duración estimada:** 1 hora
-**Dependencias:** 1.1, 1.2, 2.1
+**Duración estimada:** 1.5 horas
+**Dependencias:** 0.4, 1.3, 2.4
 
 **Descripción:**
-Implementar los héroes Boss, que son raros, tienen stats extremos, exigen misiones boss, y ofrecen recompensas enormes. Estilo Balatro: los números se vuelven absurdos y emocionantes.
+Implementar el sistema de eventos aleatorios que se activan al inicio de cada día. Cada evento tiene un efecto (buff o debuf) que dura todo el día. Los eventos añaden variabilidad al loop, forzando al jugador a adaptarse y añadiendo narrativa ligera al paso del tiempo.
 
 **Pasos:**
-1. En `HeroSpawner`:
-   - Agregar peso de probabilidad por rareza:
-     - Common: 60%
-     - Rare: 25%
-     - Epic: 12%
-     - Boss: 3%
-   - La probabilidad de Boss aumenta con el RunNumber: `bossChance = 0.03 + (runNumber * 0.01)`
-2. Los héroes Boss tienen:
-   - Stats en el rango 50-100 (en lugar de 1-20)
-   - `MinMissionXP` extremadamente alto (solo aceptan misiones boss)
-   - `PatienceMultiplier = 0.5` (muy impaciente)
-   - Retrato y animación distintos (borde dorado, efecto de partículas)
-3. Las misiones Boss (`IsBossMission = true`):
-   - Solo aparecen cuando hay un héroe Boss en la cola
-   - `PrimaryStatRequirement` en el rango 40-80
-   - Recompensa: 5× coins base + score especial
-   - Si falla: penalidad doble (cuenta como 2 fallos en lugar de 1)
-4. UI especial para héroes Boss:
-   - El slot se hace más grande o tiene un marco especial
-   - Texto de alerta: "¡HÉROE LEGENDARIO!" con animación
+1. Crear `Assets/Scripts/Data/DailyEventData.cs`:
+   ```csharp
+   [CreateAssetMenu(menuName = "Questline/Daily Event")]
+   public class DailyEventData : ScriptableObject {
+       public string EventTitle;          // ej: "Lluvia de meteoros"
+       [TextArea] public string EventDescription;  // ej: "Los héroes de la zona están asustados. -2 Fuerza hoy."
+       public Sprite EventIcon;
+       public DailyEventType Type;        // StatBuff, StatDebuff, SpawnSpeedBuff, etc.
+       public HeroStat AffectedStat;      // Para tipos de stat
+       public int StatModifier;           // Valor positivo o negativo (+3, -2, etc.)
+       public float SpawnSpeedModifier;   // Para tipos de spawn (0.8 = 20% más rápido)
+       public float FameModifier;         // Multiplicador de Fama (1.2 = +20%, 0.8 = -20%)
+   }
+   ```
+2. Crear `Assets/Scripts/Core/DailyEventManager.cs`:
+   - Pool de todos los `DailyEventData` disponibles (asignados desde Inspector)
+   - `PickDailyEvent(int dayNumber)` — elige un evento aleatorio del pool (sin repetir el del día anterior)
+   - `ApplyEvent(DailyEventData event)` — aplica el modificador al sistema correspondiente:
+     - `StatBuff/Debuff` → llama `BuffManager.ApplyTemporaryStatModifier(stat, amount)`
+     - `SpawnSpeedBuff/Debuff` → ajusta `HeroSpawner.SpawnIntervalMultiplier`
+     - `FameBoost/Debuff` → registra un multiplicador en `FameManager`
+   - `ClearEvent()` — al inicio del siguiente día, remueve el modificador anterior
+   - Escucha `OnRunStart` para activar el evento del nuevo día
+   - Publica `OnDailyEventActivated { Event }`
+3. Crear al menos 12 `DailyEventData` ScriptableObjects en `Assets/Data/Events/`:
+   - **Buffs:**
+     - `Event_HeroFeast.asset` — "Los héroes festejaron anoche. +3 Fuerza hoy."
+     - `Event_GuildRumors.asset` — "Corren rumores de riqueza. +20% Fama hoy."
+     - `Event_TrainingDay.asset` — "Un veterano visitó la guild. +3 Inteligencia hoy."
+     - `Event_FairWeather.asset` — "Clima ideal. Los héroes llegan 20% más rápido."
+     - `Event_MerchantBonus.asset` — "Un mercader pasó. +3 Carisma hoy."
+     - `Event_SwiftHeroes.asset` — "Los héroes están ansiosos. +3 Destreza hoy."
+   - **Debuffs:**
+     - `Event_HeavyRain.asset` — "Lluvia torrencial. Los héroes llegan 30% más lento."
+     - `Event_BadOmen.asset` — "Un presagio oscuro. -20% Fama hoy."
+     - `Event_PlagueScare.asset` — "Miedo a la peste. -2 a todos los stats hoy." (requiere iterar stats)
+     - `Event_RivalGuild.asset` — "La guild rival robó héroes. Solo 3 slots disponibles hoy."
+     - `Event_Hangover.asset` — "Muchos héroes llegaron con resaca. -3 Fuerza hoy."
+     - `Event_Gossip.asset` — "Chismes en la guild. -3 Carisma hoy."
+4. UI del evento del día:
+   - Al inicio del día: panel breve (2 segundos o click para cerrar) mostrando el evento activo
+   - Icono del evento visible en el HUD durante todo el día (esquina del top bar)
+   - Tooltip al hover con descripción completa del efecto
 
-**Criterio de éxito:** Los héroes boss aparecen con baja frecuencia. Solo aceptan misiones boss. El fallo es más penalizante.
+**Criterio de éxito:** Cada día activa un evento aleatorio. El efecto se aplica correctamente y se elimina al iniciar el siguiente día. El jugador puede ver el evento activo en todo momento desde el HUD.
 
 ---
 
@@ -898,32 +1108,36 @@ Diseñar e implementar el HUD visible durante el gameplay. Debe mostrar toda la 
 **Pasos:**
 1. Layout del HUD (1920×1080):
    ```
-   ┌────────────────────────────────────────────────────────┐
-   │ [DÍA X]  [FALLOS: ●●○○]  [SCORE: 1234]  [TIMER: 1:30] │ ← Top bar
-   ├────────────────────────────────────────────────────────┤
-   │                                                        │
-   │  [HÉROE 1] [HÉROE 2] [HÉROE 3] [HÉROE 4]              │ ← Fila de héroes (centro-arriba)
-   │                                                        │
-   │                                                        │
-   │  [MISIÓN] [MISIÓN] [MISIÓN] [MISIÓN] [MISIÓN]         │ ← Mano de cartas (centro-abajo)
-   │                                                        │
-   ├────────────────────────────────────────────────────────┤
-   │  [🪙 15 coins]  [MAZO: 18]  [RESHUFFLE]               │ ← Bottom bar
-   └────────────────────────────────────────────────────────┘
+   ┌──────────────────────────────────────────────────────────────┐
+   │ [DÍA X]  [EVENTO🎲]  [❤️❤️❤️ vidas]                         │ ← Top bar
+   │ [FAMA: ████████░░░░  320/400 ⭐]                             │ ← Barra de Fama (sub-top)
+   ├──────────────────────────────────────────────────────────────┤
+   │                                                              │
+   │  [HÉROE 1] [HÉROE 2] [HÉROE 3] [HÉROE 4]                    │ ← Fila de héroes
+   │                                                              │
+   │  [MISIÓN] [MISIÓN] [MISIÓN] [MISIÓN] [MISIÓN]               │ ← Mano de cartas
+   │                                                              │
+   ├──────────────────────────────────────────────────────────────┤
+   │  [🪙 15 coins]  [MAZO: 18]  [RESHUFFLE]  [INVENTARIO]       │ ← Bottom bar
+   └──────────────────────────────────────────────────────────────┘
    ```
 2. Implementar cada elemento:
-   - **Top bar**: `RunDayUI`, `FailCountUI` (corazones o puntos), `ScoreUI`, `TimerUI`
-   - **Fallos**: Mostrar como iconos (calaveras). Los usados en rojo, los disponibles en gris
-   - **Timer**: Cuenta regresiva. En los últimos 20 segundos: rojo y pulsante
-   - **Mano de cartas**: Posición fija en la parte inferior, fan o hilera horizontal
-   - **CoinJar**: Esquina inferior izquierda, con animación
-   - **Mazo restante**: Número de cartas que quedan en el mazo
-   - **Botón Reshuffle**: Solo activo si el jugador tiene el buff de reshuffle
+   - **Top bar**: `DayNumberUI`, `DailyEventIconUI`, `LivesUI`
+   - **Vidas**: 3 iconos de corazón (o calavera invertida). Vida perdida = icono se rompe/oscurece con shake. El jugador siempre sabe cuánto margen le queda.
+   - **Barra de Fama**: Barra de progreso horizontal. Muestra `CurrentFame / DayThreshold`. Al llenarse: flash dorado + transición a tienda.
+   - **Icono de Evento del Día**: Icono clickeable. Al hover: descripción del evento activo (verde = buff, rojo = debuf).
+   - **Mano de cartas**: Posición fija en la parte inferior, fan o hilera horizontal.
+   - **CoinJar**: Esquina inferior izquierda, con animación.
+   - **Mazo restante**: Número de cartas que quedan en el pool del día.
+   - **Botón Reshuffle**: Solo activo si el jugador tiene el buff de reshuffle.
+   - **Inventario de consumibles**: Barra de iconos en el bottom bar. Cada icono muestra el consumible y su cantidad. Click = usa el consumible. `StatRevealHand` aplica inmediatamente. `FullStatReveal` pone al jugador en modo "elige una carta" (cursor especial + highlight de cartas en mano).
 3. Escuchar eventos para actualizar cada elemento:
-   - `OnFailPenalty` → actualizar `FailCountUI`
+   - `OnLifeLost` → shake + oscurecer icono de vida. Si `LivesRemaining == 1`: flash rojo pulsante en el HUD.
    - `OnCoinEarned` / `OnCoinSpent` → actualizar coins
-   - `OnRunStart` → resetear timer y día
-   - `OnRunEnd` → detener timer
+   - `OnFameEarned` → actualizar barra de Fama con animación de llenado
+   - `OnDayThresholdReached` → animación de barra llena + flash dorado
+   - `OnDayStart` → resetear barra de Fama, número de día, vidas a 3
+   - `OnDailyEventActivated` → actualizar icono de evento
 
 **Criterio de éxito:** El HUD muestra todos los valores correctos en tiempo real y reacciona a los eventos del juego.
 
@@ -940,48 +1154,68 @@ Mostrar feedback claro al jugador cuando una misión se resuelve: éxito o fraca
 
 **Pasos:**
 1. Crear panel de resultado (aparece 1-2 segundos después de soltar la carta):
-   - **Éxito**: Fondo verde/dorado, texto "¡MISIÓN COMPLETADA!", monedas que saltan, XP ganada
-   - **Fallo**: Fondo rojo oscuro, texto "HÉROE CAÍDO", skull animation, penalización visible
+   - **Éxito**: Fondo verde/dorado, texto "¡MISIÓN COMPLETADA!", monedas que saltan, `+X Fama ⭐`
+   - **Fallo**: Fondo rojo oscuro, texto "HÉROE CAÍDO", skull animation, `-1 vida ❤️`
+   - **Fallo con héroe sobreviviente** (falló pero no murió — FailProtection activa): el héroe regresa al slot moreteado/golpeado antes de irse
    - **Protección activada**: Fondo naranja, texto "¡BUFF ACTIVADO! El héroe sobrevivió..."
 2. Mostrar detalles de la evaluación (para que el jugador aprenda):
    - Stat usado: "Tu héroe usó [Fuerza: 7] vs [Requerimiento: 8]"
    - Probabilidad final: barra de progreso mostrando el % de chance
    - Resultado: ícono de dado o ruleta
 3. Duración: 2.5 segundos automático, o click para acelerar
-4. En caso de fallo + muerte del héroe:
+4. **Bardo de la guild:** En el fondo del escenario de la guild, hay un bardo que reacciona a cada resolución de misión:
+   - **Éxito**: el bardo toca una melodía festiva/alegre (animación de tocar instrumento con energía)
+   - **Fallo**: el bardo toca una melodía de duelo/derrota (animación cabizbaja, notas tristes)
+   - El bardo es un elemento de fondo pasivo — no bloquea la UI pero añade vida al escenario
+   - La animación del bardo puede sincronizarse con los eventos `OnMissionCompleted` / `OnMissionFailed` del EventBus
+5. En caso de fallo + muerte del héroe:
    - Animación dramática: héroe desaparece con efecto de partículas
-   - Contador de fallos en el HUD hace shake y se actualiza
-   - Si es el último fallo permitido: transición a Game Over
+   - Icono de vida en el HUD hace shake + se rompe/oscurece
+   - Si `LivesRemaining == 0`: transición a Game Over
 
-**Criterio de éxito:** El jugador siempre sabe qué pasó y por qué. La pantalla de resultado aparece y desaparece sin bloquear el juego más de lo necesario.
+**Criterio de éxito:** El jugador siempre sabe qué pasó y por qué. La pantalla de resultado aparece y desaparece sin bloquear el juego más de lo necesario. El bardo reacciona visiblemente a cada resultado.
 
 ---
 
-### TAREA 4.3 — Pantalla de Main Menu
+### TAREA 4.3 — Pantalla de Main Menu e Introducción
 **Estado:** `[ ]`
 **Responsable:** Dev D
-**Duración estimada:** 1 hora
-**Dependencias:** 0.3
+**Duración estimada:** 1.5 horas
+**Dependencias:** 0.3, 4.4
 
 **Descripción:**
-Implementar una pantalla de inicio funcional y atractiva.
+Implementar una pantalla de inicio funcional y la secuencia de introducción del juego. Sin tutorial de texto. El jugador aprende fallando. La narrativa del loop se establece desde el inicio.
 
 **Pasos:**
-1. Layout del Main Menu:
+1. **Secuencia de introducción (antes del Main Menu, al iniciar el juego por primera vez):**
+   - Mostrar el slide de Game Over: imagen cinemática de un personaje siendo echado a patadas de la guild (sombreado/silhouette). Misma pantalla que verá el jugador si pierde.
+   - La pantalla se desvanece y aparece el Main Menu normalmente.
+   - Propósito: establecer el loop narrativo desde el arranque. Si pierdes, te expulsan y otro llega a reemplazarte. El jugador que juega ahora es el reemplazo del anterior.
+   - Esta secuencia solo se muestra una vez (la primera vez que se lanza el juego). En runs subsecuentes, el Main Menu aparece directamente.
+
+2. **Diálogo de inicio (al dar "Jugar", antes del gameplay):**
+   - Breve cutscene/texto: el contratante de la guild se dirige al jugador:
+     > *"Nuestros héroes necesitan sus misiones ASAP. ¡Muévete!"*
+   - Sin más explicaciones. El juego comienza inmediatamente.
+   - No hay tutorial de arrastrar ni indicadores. El jugador descubre las mecánicas explorando.
+
+3. **Layout del Main Menu:**
    - Título del juego: "QUESTLINE" (fuente medieval/fantasy)
    - Subtítulo: "Gestiona tu guild. Infiere lo que no se dice."
-   - Botón "JUGAR" → carga `Gameplay.unity`
+   - Botón "JUGAR" → secuencia de inicio → carga `Gameplay.unity`
+   - Botón "AJUSTES" → panel de ajustes (ver paso 4)
    - Botón "SALIR" → `Application.Quit()`
-   - (Opcional) Botón "CÓMO JUGAR" → pequeño tutorial overlay
-2. Tutorial overlay (mínimo viable):
-   - 3-4 slides con texto e imágenes explicando:
-     1. "Llegan héroes con stats: Fuerza, Destreza, Inteligencia, Carisma"
-     2. "Arrastra una misión a un héroe. Lee la descripción e infiere qué stat necesita"
-     3. "Si aciertas, ganas monedas. Si fallas, el héroe muere"
-     4. "Con las monedas compras mejoras entre días. ¡Que las pistas se vayan revelando!"
-3. Animación de fondo: parallax simple con elementos de una taberna/mesón
 
-**Criterio de éxito:** El menú funciona, el botón de jugar carga el gameplay, hay al menos un tooltip de cómo jugar.
+4. **Panel de Ajustes:**
+   - Slider de volumen general (SFX + Música)
+   - Slider de volumen de música independiente
+   - Selector de resolución: 1920×1080 / 1280×720 / 1024×576
+   - Botón "Aplicar" y "Cancelar"
+   - Persistir ajustes con `PlayerPrefs`
+
+5. Animación de fondo: parallax simple con elementos de una taberna/mesón
+
+**Criterio de éxito:** El menú funciona. La secuencia de introducción establece la narrativa sin texto de tutorial. El jugador puede cambiar resolución y volumen. Al jugar, el contratante da la única instrucción antes de que empiece el caos.
 
 ---
 
@@ -998,18 +1232,18 @@ Mostrar una pantalla de game over que comunique el resultado de la partida y per
 1. Pantalla de Game Over:
    - Título: "EXPULSADO DE LA GUILD"
    - Texto dramático: "Tu gestión desastrosa ha costado demasiadas vidas..."
-   - Stats de la partida: días sobrevividos, misiones completadas, monedas totales, héroes perdidos
+   - Stats de la partida: días sobrevividos, misiones completadas, héroes perdidos (murieron o se fueron enojados), **Fama total acumulada** (reemplaza Score)
    - Botón "VOLVER AL MENÚ" → MainMenu
-   - Botón "INTENTAR DE NUEVO" → reinicia desde run 1, resetea todo
-2. Resumen de run (inter-run, antes del shop):
-   - Tabla de la run: misiones exitosas, fallidas, coins ganadas
-   - Mejor héroe de la run (el que más misiones completó)
+   - Botón "INTENTAR DE NUEVO" → reinicia desde Día 1, resetea todo (coins, buffs, fama)
+2. Resumen de día (inter-día, antes del shop):
+   - Tabla del día: misiones exitosas, fallidas, coins ganadas, Fama ganada
+   - Mejor héroe del día (el que más Fama generó)
    - Streak de éxitos consecutivos si aplica
 3. Pantalla de victoria (si existe condición de victoria):
-   - Por ahora: si el jugador llega a la run 10 → pantalla de victoria
-   - "¡Tu guild es legendaria!" + score final
+   - Por ahora: si el jugador llega al Día 10 → pantalla de victoria
+   - "¡Tu guild es legendaria!" + Fama total acumulada en toda la partida
 
-**Criterio de éxito:** Game Over muestra stats correctos. El jugador puede reiniciar sin errores. Las coins y buffs se resetean correctamente.
+**Criterio de éxito:** Game Over muestra stats correctos (Fama, no Score). El jugador puede reiniciar sin errores. Coins, buffs y consumibles se resetean correctamente al reiniciar desde el principio.
 
 ---
 
@@ -1040,6 +1274,36 @@ Implementar tooltips que aparecen al hover sobre elementos del juego, y mensajes
    - Al rechazar misión: "¡Me niego!" en globo de diálogo sobre el héroe
 
 **Criterio de éxito:** Todos los elementos importantes tienen tooltip. Los floating texts aparecen en el momento correcto.
+
+---
+
+### TAREA 4.6 — UI de la tienda inter-día
+**Estado:** `[ ]`
+**Responsable:** Dev D
+**Duración estimada:** 2 horas
+**Dependencias:** 3.2, 4.1
+
+**Descripción:**
+Construir el panel visual de la tienda que se muestra entre días. La lógica de compra ya está en `ShopManager` (TAREA 3.2); esta tarea conecta esa lógica con la UI.
+
+**Pasos:**
+1. En `ShopPanel` (Canvas ya creado en 0.3), construir el layout:
+   - Título: "Mejoras de Guild" (o similar)
+   - 3 slots de carta de ítem: icono + nombre + descripción + precio en coins
+   - Botón "Comprar" por carta (se desactiva si coins insuficientes o ya comprado)
+   - Botón "Continuar" alineado abajo para saltar la tienda sin comprar
+   - Contador de coins actual visible en la esquina superior
+2. Crear `Assets/Scripts/UI/ShopUI.cs`:
+   - Al abrirse, llama `ShopManager.GetShopOffers()` y renderiza los 3 ítems
+   - `OnBuyClicked(int slotIndex)` → llama `ShopManager.PurchaseBuff/PurchaseConsumable` → actualiza estado visual del slot (gris + "Comprado")
+   - Si coins insuficientes al intentar comprar: shake animation en el contador de coins
+   - Al cerrar (`OnContinueClicked`): `ShopManager.CloseShop()` → `RunManager.StartNextDay()`
+3. Feedback visual:
+   - Al comprar: brillo/glow breve en la carta comprada + sonido de compra (AudioManager)
+   - Carta comprada queda desactivada visualmente (no se puede recomprar)
+4. La tienda solo es accesible desde `RunManager` al recibir `OnDayThresholdReached` — no se puede abrir manualmente.
+
+**Criterio de éxito:** El panel muestra 3 ítems con precio correcto. El botón Comprar funciona y descuenta coins. El botón Continuar avanza al siguiente día. El panel no es accesible durante gameplay activo.
 
 ---
 
@@ -1079,10 +1343,12 @@ Implementar el sistema de audio y agregar efectos de sonido para las acciones pr
    - **Reshuffle**: sonido de cartas barajándose
    - **Game Over**: melodía de derrota
    - **Pista revelada**: sonido de descubrimiento/eureka
+   - **Evento diario — buff**: fanfare corto positivo (trompeta alegre)
+   - **Evento diario — debuf**: acorde oscuro descendente
+   - **Barra de Fama llena**: fanfare de victoria del día (diferente al de misión completada)
 3. Música de fondo:
    - Música de taberna/mesón tranquila para el gameplay
-   - Música más intensa cuando hay pocos fallos restantes
-   - Música de boss cuando hay un héroe boss activo
+   - Música más intensa cuando hay pocos fallos restantes o la barra de Fama está cerca del umbral
 4. Escuchar eventos del EventBus para reproducir sonidos:
    - `OnHeroArrived` → sfx llegada
    - `OnMissionCompleted` → sfx éxito
@@ -1109,17 +1375,19 @@ Agregar efectos de partículas y animaciones simples para hacer el juego más sa
    - **Héroe muere**: partículas rojas/oscuras + desvanecimiento del sprite
    - **Misión exitosa**: confetti o destellos dorados brevemente
    - **Buff comprado**: efecto de brillo en el ícono del buff
-   - **Héroe Boss aparece**: explosion de luz + partículas doradas de alta intensidad
+   - **Barra de Fama llena**: explosión de estrellas doradas desde la barra + flash pantalla dorado suave
+   - **Evento diario buff**: partículas verdes/brillantes en el icono del evento
+   - **Evento diario debuf**: partículas oscuras/púrpuras en el icono del evento
 2. Animaciones de UI (con Animator o DOTween):
    - Carta de misión: float suave (sube y baja 2-3 pixels en loop)
    - HeroSlot al recibir un drop: pequeño bounce
    - FailCounter al incrementar: shake + flash rojo
    - CoinCounter al incrementar: bounce + flash dorado
+   - **Barra de Fama**: fill animado al ganar Fama, pulso cuando está al 80% del umbral
 3. Efectos de cámara simples (Camera Shake):
    - Al fallar una misión: pequeño shake de cámara (0.3 segundos)
-   - Al morir un boss: shake más intenso (0.5 segundos)
 4. Screen flash:
-   - Al ganar una misión boss: flash blanco suave
+   - Al completarse el umbral de Fama: flash dorado suave
    - Al perder el último fallo: flash rojo intenso antes del game over
 
 **Criterio de éxito:** El juego se siente "vivo" con los efectos. Los VFX no causan drops de framerate.
