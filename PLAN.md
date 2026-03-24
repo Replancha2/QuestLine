@@ -284,26 +284,51 @@ Definir la estructura de datos de un héroe como ScriptableObject base y la clas
        public int Charisma;
        public HeroRarity Rarity;
        public Sprite Portrait;
-       public float Patience;         // segundos antes de irse
+       public float Patience;         // segundos antes de irse (Impulsivo: BasePatience / 2)
+
+       // Rasgos procedurales — 2-3 por héroe, asignados en Generate()
+       public List<HeroTrait> Traits;
+       public List<HeroStat> HiddenStats;   // Solo relevante si tiene Distrustful; 2 stats elegidos al azar
 
        // Estado en runtime
        public bool IsWaiting;
        public bool IsDead;
 
        // Método de construcción
+       // Generate() asigna Traits: elige 2-3 rasgos al azar del enum (sin repetición)
+       // Si Impulsive está en Traits: Patience = BasePatience / 2
        public static HeroInstance Generate(HeroData template) { ... }
 
-       // Verifica si el héroe acepta una misión (siempre true en diseño actual — placeholder para futuras restricciones)
+       // Verifica si el héroe acepta la misión según sus rasgos:
+       //   Greedy    → false si mission.Template.CoinsReward < 6
+       //   Demanding → false si mission.Template.Rank <= R3
+       //   (resto)   → true
        public bool WillAcceptMission(MissionInstance mission) { ... }
 
        // Calcula probabilidad de éxito (0.0 a 1.0)
+       // Specialist: si PrimaryStat de la misión == el stat más alto del héroe → +0.15
        public float CalculateSuccessChance(MissionInstance mission) { ... }
+
+       // Devuelve el stat más alto del héroe (para Specialist)
+       public HeroStat GetDominantStat() { ... }
    }
    ```
 3. Crear `Assets/Scripts/Utils/Enums.cs` con:
    ```csharp
    public enum HeroStat { Strength, Dexterity, Intelligence, Charisma }
    public enum HeroRarity { Common, Rare, Epic }
+
+   // Rasgos procedurales — se asignan 2-3 al spawnear cada héroe
+   public enum HeroTrait {
+       Greedy,       // Solo acepta misiones con CoinsReward >= 6
+       Specialist,   // +15% chance si el PrimaryStat de la misión es el stat más alto del héroe
+       Reckless,     // Acepta cualquier misión; si éxito en misión con chance < 30%: CoinsEarned × 2
+       Distrustful,  // Sus stats se muestran parcialmente ocultos en UI (el jugador ve 2 de 4)
+       Demanding,    // Rechaza misiones de Rank R1–R3 (dificultad baja)
+       Impulsive,    // Patience drena 2× más rápido; CoinsEarned × 2 en cualquier misión
+       // Loyal — STRETCH GOAL (requiere persistencia cross-run): paciencia ilimitada si ya completó
+       //         una misión en una run anterior. No implementar en jam.
+   }
 
    // Rango 1–12, tipo naipe inglés (A=1 hasta Q=12)
    // A mayor rango: mayores requisitos (calculados por fórmula) y mayor Fama/coins
@@ -576,6 +601,9 @@ Implementar la lógica central de resolución de misiones: dada una misión y un
    foreach secondaryStat:
        if hero.secondaryStat >= secondaryReq:
            bonusChance += 0.05f
+   // Rasgos que modifican chance:
+   if hero.Traits.Contains(Specialist) && mission.Template.PrimaryStat == hero.GetDominantStat():
+       bonusChance += 0.15f
    finalChance = Mathf.Clamp01(baseChance + bonusChance)
    success = Random.value <= finalChance
 
@@ -583,11 +611,18 @@ Implementar la lógica central de resolución de misiones: dada una misión y un
    float fameModifier = DailyEventManager.GetFameModifier()  // 1.0 por defecto
    result.FameEarned  = Mathf.RoundToInt(mission.Template.FameReward * fameModifier)
    result.CoinsEarned = mission.Template.CoinsReward
+   // Rasgos que modifican recompensas:
+   if hero.Traits.Contains(Impulsive):
+       result.CoinsEarned *= 2
+   if hero.Traits.Contains(Reckless) && success && finalChance < 0.30f:
+       result.CoinsEarned *= 2
    ```
 3. Manejo de rechazo de misión por el héroe:
    ```
    hero.WillAcceptMission(mission):
-       return true   // En diseño actual los héroes aceptan cualquier misión asignada
+       if hero.Traits.Contains(Greedy)    && mission.Template.CoinsReward < 6:  return false
+       if hero.Traits.Contains(Demanding) && mission.Template.Rank <= R3:        return false
+       return true
    ```
 4. Escribir tests manuales en un MonoBehaviour de prueba:
    - Héroe con Fuerza 10 vs misión que requiere Fuerza 8 → alta probabilidad de éxito
@@ -597,7 +632,7 @@ Implementar la lógica central de resolución de misiones: dada una misión y un
    - Fallo → `EventBus.Publish(new OnMissionFailed {...})` → si no hay protección, `EventBus.Publish(new OnHeroDied {...})`
    - Todas las misiones tienen peso de fallo = 1. No hay penalizaciones dobles.
 
-**Criterio de éxito:** `MissionEvaluator.Evaluate` devuelve resultados estadísticamente coherentes. Los eventos se publican correctamente.
+**Criterio de éxito:** `MissionEvaluator.Evaluate` devuelve resultados estadísticamente coherentes. Los rasgos Greedy, Demanding, Specialist, Reckless e Impulsive modifican el resultado correctamente. Los eventos se publican correctamente.
 
 ---
 
@@ -652,7 +687,7 @@ Implementar el sistema que gestiona la llegada de héroes, los 4 slots visibles 
 **Pasos:**
 1. Crear `Assets/Scripts/Heroes/HeroSpawner.cs`:
    - Referencia al array de `HeroData` templates disponibles
-   - `SpawnHero()` — elige un template aleatorio, genera un `HeroInstance` con stats escalados por `DayNumber`, lo agrega a la cola
+   - `SpawnHero()` — elige un template aleatorio, genera un `HeroInstance` con stats escalados por `DayNumber`, asigna **2-3 rasgos aleatorios** (`HeroTrait`) sin repetición, lo agrega a la cola
    - `SpawnIntervalMultiplier = 1.0f` — modificado por `DailyEventManager` para eventos de velocidad de spawn
    - Intervalo efectivo: `SpawnIntervalBase * SpawnIntervalMultiplier` (clampeado a `SpawnIntervalMin`)
    - Publica `OnHeroArrived`
@@ -671,8 +706,9 @@ Implementar el sistema que gestiona la llegada de héroes, los 4 slots visibles 
    - Al impaciencia < 20%: reproducir animación de nerviosismo
 4. Crear `Assets/Scripts/Heroes/HeroSlotUI.cs`:
    - Muestra el retrato del héroe
-   - Muestra stats (con iconos o texto)
-   - Muestra barra de paciencia
+   - Muestra stats (con iconos o texto); si el héroe tiene rasgo **Distrustful**: ocultar 2 de los 4 stats (elegir cuáles ocultar aleatoriamente al spawnear, guardar en `HeroInstance.HiddenStatIndices`)
+   - Muestra barra de paciencia (héroe con **Impulsive**: barra roja desde el inicio para señalizar urgencia)
+   - Muestra iconos de rasgos debajo del retrato (2-3 iconos pequeños con tooltip al hover)
    - Efecto de entrada (tween desde el borde de la pantalla)
    - Efecto de salida al asignar misión o irse
 5. Definir los datos de la cola en un `HeroQueueConfig` (SO):
@@ -1265,13 +1301,14 @@ Implementar tooltips que aparecen al hover sobre elementos del juego, y mensajes
    - Delay de 0.5 segundos antes de aparecer (evitar spam)
 2. Tooltips en elementos del juego:
    - Stats del héroe (ej: hover sobre el ícono de Fuerza → "Fuerza: qué tan bien combate cuerpo a cuerpo")
+   - **Iconos de rasgo del héroe** (ej: hover sobre ícono de Greedy → "Codicioso: solo acepta misiones con propina ≥ 6 monedas")
    - Iconos de pista en misiones (ej: hover → "Esta pista se desbloqueó en el Día 2")
    - Contador de fallos (ej: hover → "Fallos restantes: 2. Al llegar a 0, game over.")
    - Buffs en el shop (ej: hover → descripción completa del buff)
 3. Floating text (números que flotan y desaparecen):
    - Al ganar coins: "+5" dorado que sube y se desvanece desde el CoinJar
    - Al fallar: "FALLO" rojo que aparece sobre el héroe
-   - Al rechazar misión: "¡Me niego!" en globo de diálogo sobre el héroe
+   - Al rechazar misión por rasgo: texto de sabor sobre el héroe (ej: "¡Muy fácil para mí!" para Demanding, "¿Solo eso me pagas?" para Greedy)
 
 **Criterio de éxito:** Todos los elementos importantes tienen tooltip. Los floating texts aparecen en el momento correcto.
 
