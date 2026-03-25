@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eb018f71fbd97f1589b08f93435cdfa, type: 3}
+  m_Name: Mission_R12_Dex
+  m_EditorClassIdentifier: Assembly-CSharp::MissionData
+  MissionTitle: El hilo suelto del tapiz
+  Description: "El \xFAltimo hilo del tapiz c\xF3smico se ha soltado. Quien lo anude
+    cambiar\xE1 el patr\xF3n de la realidad para siempre. El tejedor necesita manos
+    que no tiemblen."
+  MissionArt: {fileID: 0}
+  Rank: 12
+  PrimaryStat: 1
+  SecondaryStats: 
+  CoinsReward: 36
+  FameReward: 60
+  IsBoss: 0
+  Hints:
+  - HintText: La realidad no perdona la torpeza.
+    HintColor: {r: 1, g: 0.6, b: 0.1, a: 1}
+    RelatedStat: 1
+  - HintText: Destreza +++++
+    HintColor: {r: 0.18, g: 0.8, b: 0.44, a: 1}
+    RelatedStat: 1

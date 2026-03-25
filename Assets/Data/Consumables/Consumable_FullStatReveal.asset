@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdc5726568dbba687be0c8046c42aed6, type: 3}
+  m_Name: Consumable_FullStatReveal
+  m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
+  Name: Lectura Profunda
+  Description: "Revela TODOS los requisitos (primario y secundarios) de UNA carta
+    de misi\xF3n a tu elecci\xF3n. Un solo uso."
+  Icon: {fileID: 0}
+  Cost: 15
+  Type: 3

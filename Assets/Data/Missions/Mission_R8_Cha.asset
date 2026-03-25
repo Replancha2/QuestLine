@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eb018f71fbd97f1589b08f93435cdfa, type: 3}
+  m_Name: Mission_R8_Cha
+  m_EditorClassIdentifier: Assembly-CSharp::MissionData
+  MissionTitle: Intermediario ancestral
+  Description: "Los esp\xEDritus del territorio ancestral piden un intermediario
+    que entienda su lenguaje. Solo alguien con presencia y don de gentes puede comunicarse
+    con ellos."
+  MissionArt: {fileID: 0}
+  Rank: 8
+  PrimaryStat: 3
+  SecondaryStats: 
+  CoinsReward: 24
+  FameReward: 40
+  IsBoss: 0
+  Hints:
+  - HintText: "Los esp\xEDritus no escuchan a quien no sabe escucharlos."
+    HintColor: {r: 1, g: 0.6, b: 0.1, a: 1}
+    RelatedStat: 3
+  - HintText: Carisma ++++
+    HintColor: {r: 0.18, g: 0.8, b: 0.44, a: 1}
+    RelatedStat: 3

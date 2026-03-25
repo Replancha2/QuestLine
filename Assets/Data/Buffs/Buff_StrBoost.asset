@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2912e191199ea5b0b0681845845fcd5, type: 3}
+  m_Name: Buff_StrBoost
+  m_EditorClassIdentifier: Assembly-CSharp::BuffData
+  BuffName: Impulso de Fuerza
+  Description: "Otorga +3 de Fuerza a todos los h\xE9roes contratados."
+  Icon: {fileID: 0}
+  Cost: 5
+  Type: 0
+  IsPermanent: 1
+  AffectedStat: 0
+  StatBoostAmount: 3
+  HintsToReveal: 0
+  PatienceBoostPercent: 0
+  FailProtectionCount: 0

@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eb018f71fbd97f1589b08f93435cdfa, type: 3}
+  m_Name: Mission_R5_Cha
+  m_EditorClassIdentifier: Assembly-CSharp::MissionData
+  MissionTitle: El culto en el barrio bajo
+  Description: "Un culto misterioso gana adeptos a ritmo alarmante en el barrio bajo.
+    Su l\xEDder es carism\xE1tico y peligroso. Alguien debe infiltrarse y ganarse
+    su confianza."
+  MissionArt: {fileID: 0}
+  Rank: 5
+  PrimaryStat: 3
+  SecondaryStats: 02000000
+  CoinsReward: 15
+  FameReward: 25
+  IsBoss: 0
+  Hints:
+  - HintText: Para infiltrarse, hay que encajar y convencer.
+    HintColor: {r: 1, g: 0.6, b: 0.1, a: 1}
+    RelatedStat: 3
+  - HintText: Carisma +++ / Inteligencia +
+    HintColor: {r: 0.18, g: 0.8, b: 0.44, a: 1}
+    RelatedStat: 3

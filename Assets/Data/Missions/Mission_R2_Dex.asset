@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eb018f71fbd97f1589b08f93435cdfa, type: 3}
+  m_Name: Mission_R2_Dex
+  m_EditorClassIdentifier: Assembly-CSharp::MissionData
+  MissionTitle: El carterista del mercado
+  Description: Un carterista opera en el mercado central. Los guardias llevan semanas
+    sin poder atraparlo.
+  MissionArt: {fileID: 0}
+  Rank: 2
+  PrimaryStat: 1
+  SecondaryStats: 
+  CoinsReward: 6
+  FameReward: 10
+  IsBoss: 0
+  Hints:
+  - HintText: "Hay que moverse m\xE1s r\xE1pido que \xE9l."
+    HintColor: {r: 1, g: 0.6, b: 0.1, a: 1}
+    RelatedStat: 1
+  - HintText: Destreza ++
+    HintColor: {r: 0.18, g: 0.8, b: 0.44, a: 1}
+    RelatedStat: 1

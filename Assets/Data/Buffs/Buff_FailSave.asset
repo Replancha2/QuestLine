@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2912e191199ea5b0b0681845845fcd5, type: 3}
+  m_Name: Buff_FailSave
+  m_EditorClassIdentifier: Assembly-CSharp::BuffData
+  BuffName: Amuleto Protector
+  Description: "Absorbe 1 muerte de h\xE9roe: si un h\xE9roe falla su misi\xF3n,
+    no cuenta como vida perdida."
+  Icon: {fileID: 0}
+  Cost: 12
+  Type: 4
+  IsPermanent: 1
+  AffectedStat: 0
+  StatBoostAmount: 0
+  HintsToReveal: 0
+  PatienceBoostPercent: 0
+  FailProtectionCount: 1

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2912e191199ea5b0b0681845845fcd5, type: 3}
+  m_Name: Buff_HintReveal
+  m_EditorClassIdentifier: Assembly-CSharp::BuffData
+  BuffName: "Magia de Adivinaci\xF3n"
+  Description: "Revela el stat primario de una misi\xF3n aleatoria en la mano actual."
+  Icon: {fileID: 0}
+  Cost: 6
+  Type: 1
+  IsPermanent: 0
+  AffectedStat: 0
+  StatBoostAmount: 0
+  HintsToReveal: 1
+  PatienceBoostPercent: 0
+  FailProtectionCount: 0

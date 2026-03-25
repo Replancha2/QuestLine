@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdc5726568dbba687be0c8046c42aed6, type: 3}
+  m_Name: Consumable_StatRevealHand
+  m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
+  Name: "Visi\xF3n de Conjunto"
+  Description: "Revela el stat primario de TODAS las cartas de misi\xF3n en la mano
+    actual. Un solo uso."
+  Icon: {fileID: 0}
+  Cost: 8
+  Type: 2
