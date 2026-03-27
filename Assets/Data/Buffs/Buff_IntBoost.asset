@@ -15,7 +15,7 @@ MonoBehaviour:
   BuffName: Impulso de Inteligencia
   Description: "Otorga +3 de Inteligencia a todos los h\xE9roes contratados."
   Icon: {fileID: 0}
-  Cost: 5
+  Cost: 60
   Type: 0
   IsPermanent: 1
   AffectedStat: 2

@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 128ed33c220593cdfb02a2a65f932e5d, type: 3}
   m_Name: HeroQueueConfig
   m_EditorClassIdentifier: Assembly-CSharp::HeroQueueConfig
-  SpawnIntervalBase: 15
-  SpawnIntervalMin: 5
+  SpawnIntervalBase: 3
+  SpawnIntervalMin: 1
   MaxSimultaneousHeroes: 4
   HeroTemplates:
   - {fileID: 11400000, guid: 6c49e12f9c7484ce5949cbe0b2081c13, type: 2}

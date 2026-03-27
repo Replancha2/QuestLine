@@ -101,8 +101,8 @@ public static class MissionEvaluator
         int fameEarned = success ? Mathf.RoundToInt(mission.Template.FameReward * fameModifier) : 0;
         int xpEarned   = success ? BaseXPReward : 0;
 
-        // Coins base + bonus por nivel del héroe (+1 moneda por cada 5 niveles)
-        int levelBonus  = hero.Level / 5;
+        // Coins base + bonus por nivel del héroe (+1 moneda por cada 10 niveles)
+        int levelBonus  = hero.Level / 10;
         int coinsEarned = success ? (mission.Template.CoinsReward + levelBonus) : 0;
 
         // Boss: 2× coins al completar con éxito
@@ -117,6 +117,12 @@ public static class MissionEvaluator
         // Rasgo Reckless: dobla coins si tuvo éxito con < 30 % de probabilidad
         if (success && hero.Traits.Contains(HeroTrait.Reckless) && finalChance < 0.30f)
             coinsEarned *= 2;
+
+        // Progressive scaling: coins increase with day number to make later days more rewarding,
+        // but start lower to nerf early game
+        int day = GameManager.Instance != null ? GameManager.Instance.DayNumber : 1;
+        float dayMultiplier = 0.2f + (day - 1) * 0.1f; // Day 1: 0.2x, Day 2: 0.3x, Day 10: 1.0x
+        coinsEarned = Mathf.RoundToInt(coinsEarned * dayMultiplier);
 
         // ── 9. Actualizar estado de la instancia ──────────────────────────────
         if (success)

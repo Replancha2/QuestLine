@@ -15,7 +15,7 @@ MonoBehaviour:
   BuffName: "Magia de Adivinaci\xF3n"
   Description: "Revela el stat primario de una misi\xF3n aleatoria en la mano actual."
   Icon: {fileID: 0}
-  Cost: 6
+  Cost: 80
   Type: 1
   IsPermanent: 0
   AffectedStat: 0

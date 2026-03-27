@@ -79,7 +79,10 @@ public class HeroSpawner : MonoBehaviour
 
     private IEnumerator SpawnLoop()
     {
-        // Primer spawn inmediato al arrancar el día
+        // 4 heroes spawnean inmediato al arrancar el día
+        SpawnHero();
+        SpawnHero();
+        SpawnHero();
         SpawnHero();
 
         while (_isSpawning)
@@ -120,6 +123,11 @@ public class HeroSpawner : MonoBehaviour
         hero.Dexterity    = Random.Range(min, max + 1);
         hero.Intelligence = Random.Range(min, max + 1);
         hero.Charisma     = Random.Range(min, max + 1);
+
+        // Escalar paciencia: heroes tienen menos paciencia conforme avanzan los días
+        // (dejan de esperar más rápido, forzando decisiones más rápidas)
+        float patienceMultiplier = 1f / (1f + (day - 1) * 0.1f); // Día 1: 1x, Día 2: ~0.9x, Día 10: ~0.5x
+        hero.Patience *= patienceMultiplier;
 
         EventBus.Publish(new OnHeroArrived { Hero = hero });
     }

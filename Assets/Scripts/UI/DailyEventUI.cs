@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// UI del evento diario:
@@ -23,8 +24,8 @@ public class DailyEventUI : MonoBehaviour
 
     [Header("Panel de anuncio (inicio del día)")]
     [SerializeField] private GameObject _announcementPanel;
-    [SerializeField] private Text       _titleText;
-    [SerializeField] private Text       _descriptionText;
+    [SerializeField] private TMP_Text   _titleText;
+    [SerializeField] private TMP_Text   _descriptionText;
     [SerializeField] private Image      _announcementIcon;
     [SerializeField] private Button     _closeButton;
 
@@ -34,7 +35,7 @@ public class DailyEventUI : MonoBehaviour
 
     // ── Constantes ────────────────────────────────────────────────────────────
 
-    private const float AnnouncementDuration = 2f;
+    private const float AnnouncementDuration = 10f;
 
     // ── Unity ─────────────────────────────────────────────────────────────────
 
@@ -42,8 +43,12 @@ public class DailyEventUI : MonoBehaviour
     {
         HideAll();
 
+        Debug.Log("_closeButton is " + (_closeButton != null ? "assigned" : "null"));
         if (_closeButton != null)
+        {
             _closeButton.onClick.AddListener(HideAnnouncement);
+            Debug.Log("Listener added to _closeButton");
+        }
     }
 
     private void OnEnable()
@@ -62,6 +67,7 @@ public class DailyEventUI : MonoBehaviour
 
     private void HandleEventActivated(OnDailyEventActivated e)
     {
+        Debug.Log("HandleEventActivated called with event: " + (e.Event != null ? e.Event.EventTitle : "null"));
         if (e.Event == null) return;
 
         // Actualizar textos e ícono del panel de anuncio
@@ -73,10 +79,11 @@ public class DailyEventUI : MonoBehaviour
         if (_hudIconImage != null) _hudIconImage.sprite = e.Event.EventIcon;
         if (_hudIconRoot  != null) _hudIconRoot.SetActive(true);
 
-        // Mostrar panel de anuncio y auto-cerrar tras 2 segundos
+        // Mostrar panel de anuncio y pausar el juego hasta que el panel se cierre
         if (_announcementPanel != null)
         {
             _announcementPanel.SetActive(true);
+            Time.timeScale = 0f;
             StopAllCoroutines();
             StartCoroutine(AutoHideAnnouncement());
         }
@@ -85,6 +92,7 @@ public class DailyEventUI : MonoBehaviour
     private void HandleDayEnd(OnDayEnd e)
     {
         HideAll();
+        Time.timeScale = 1f;
     }
 
     // ── Coroutine ─────────────────────────────────────────────────────────────
@@ -99,13 +107,16 @@ public class DailyEventUI : MonoBehaviour
 
     private void HideAnnouncement()
     {
+        Debug.Log("HideAnnouncement called");
         StopAllCoroutines();
         if (_announcementPanel != null) _announcementPanel.SetActive(false);
+        Time.timeScale = 1f;
     }
 
     private void HideAll()
     {
         if (_announcementPanel != null) _announcementPanel.SetActive(false);
         if (_hudIconRoot       != null) _hudIconRoot.SetActive(false);
+        Time.timeScale = 1f;
     }
 }

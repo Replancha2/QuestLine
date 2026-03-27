@@ -17,7 +17,8 @@ public class BuffManager : MonoBehaviour
     // ── Estado ──────────────────────────────────────────────────────────────
 
     private readonly List<BuffData> _permanentBuffs = new List<BuffData>();
-    private readonly List<StatModifier> _dailyModifiers = new List<StatModifier>();
+    private readonly List<StatModifier> _shopDailyModifiers = new List<StatModifier>();
+    private readonly List<StatModifier> _eventModifiers = new List<StatModifier>();
 
     // Protección contra fallos: número de escudos activos
     private int _failProtectionCharges = 0;
@@ -51,7 +52,7 @@ public class BuffManager : MonoBehaviour
                     _permanentBuffs.Add(buff);
                 // Si no es permanente se aplica como modificador único de aquí al fin del día
                 else
-                    _dailyModifiers.Add(new StatModifier
+                    _shopDailyModifiers.Add(new StatModifier
                     {
                         Stat   = buff.AffectedStat,
                         Amount = buff.StatBoostAmount,
@@ -86,7 +87,7 @@ public class BuffManager : MonoBehaviour
     /// </summary>
     public void ApplyDailyModifier(HeroStat stat, int amount)
     {
-        _dailyModifiers.Add(new StatModifier { Stat = stat, Amount = amount });
+        _eventModifiers.Add(new StatModifier { Stat = stat, Amount = amount });
     }
 
     /// <summary>
@@ -95,7 +96,7 @@ public class BuffManager : MonoBehaviour
     /// </summary>
     public void ClearDailyModifiers()
     {
-        _dailyModifiers.Clear();
+        _eventModifiers.Clear();
     }
 
     /// <summary>
@@ -109,7 +110,11 @@ public class BuffManager : MonoBehaviour
             if (buff.Type == BuffType.HeroStatBoost && buff.AffectedStat == stat)
                 total += buff.StatBoostAmount;
 
-        foreach (var mod in _dailyModifiers)
+        foreach (var mod in _shopDailyModifiers)
+            if (mod.Stat == stat)
+                total += mod.Amount;
+
+        foreach (var mod in _eventModifiers)
             if (mod.Stat == stat)
                 total += mod.Amount;
 

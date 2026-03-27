@@ -15,7 +15,7 @@ MonoBehaviour:
   BuffName: Paciencia Infinita
   Description: "Los h\xE9roes esperan un 50 % m\xE1s de tiempo antes de irse."
   Icon: {fileID: 0}
-  Cost: 8
+  Cost: 100
   Type: 3
   IsPermanent: 1
   AffectedStat: 0

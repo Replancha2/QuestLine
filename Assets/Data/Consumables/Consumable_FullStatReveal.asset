@@ -16,5 +16,5 @@ MonoBehaviour:
   Description: "Revela TODOS los requisitos (primario y secundarios) de UNA carta
     de misi\xF3n a tu elecci\xF3n. Un solo uso."
   Icon: {fileID: 0}
-  Cost: 15
+  Cost: 24
   Type: 3

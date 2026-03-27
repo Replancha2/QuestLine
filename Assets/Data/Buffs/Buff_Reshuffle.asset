@@ -16,7 +16,7 @@ MonoBehaviour:
   Description: "Descarta la mano actual y roba un nuevo conjunto de misiones del
     pool del d\xEDa."
   Icon: {fileID: 0}
-  Cost: 3
+  Cost: 40
   Type: 2
   IsPermanent: 0
   AffectedStat: 0

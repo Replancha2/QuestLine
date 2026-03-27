@@ -15,7 +15,7 @@ MonoBehaviour:
   BuffName: "T\xF3nico Milagroso"
   Description: "Otorga +10 a un stat aleatorio de todos los h\xE9roes contratados."
   Icon: {fileID: 0}
-  Cost: 20
+  Cost: 250
   Type: 0
   IsPermanent: 1
   AffectedStat: 0

@@ -16,5 +16,5 @@ MonoBehaviour:
   Description: "Revela el stat primario de TODAS las cartas de misi\xF3n en la mano
     actual. Un solo uso."
   Icon: {fileID: 0}
-  Cost: 8
+  Cost: 12
   Type: 2
