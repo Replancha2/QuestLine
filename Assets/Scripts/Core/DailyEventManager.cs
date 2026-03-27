@@ -44,7 +44,6 @@ public class DailyEventManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()  => EventBus.Subscribe<OnDayStart>(HandleDayStart);

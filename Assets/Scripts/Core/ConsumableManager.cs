@@ -28,7 +28,6 @@ public class ConsumableManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     // ── API pública ──────────────────────────────────────────────────────────

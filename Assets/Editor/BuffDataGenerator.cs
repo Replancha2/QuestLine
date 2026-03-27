@@ -3,10 +3,10 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Herramienta de editor que genera los BuffData y ConsumableData ScriptableObjects.
-/// Menú: Questline → Generate Buff &amp; Consumable Assets
+/// Editor tool that generates BuffData and ConsumableData ScriptableObjects.
+/// Menu: Questline → Generate Buff & Consumable Assets
 ///
-/// Idempotente: no sobreescribe assets ya existentes.
+/// Idempotent: does not overwrite existing assets.
 /// </summary>
 public static class BuffDataGenerator
 {
@@ -25,79 +25,79 @@ public static class BuffDataGenerator
         // ── Buffs ────────────────────────────────────────────────────────────
 
         created += TryCreateBuff(ref skipped, "Buff_StrBoost",
-            "Impulso de Fuerza",
-            "Otorga +3 de Fuerza a todos los héroes contratados.",
+            "Strength Boost",
+            "Grants +3 Strength to all hired heroes.",
             cost: 5, type: BuffType.HeroStatBoost, isPermanent: true,
             affectedStat: HeroStat.Strength, statBoost: 3);
 
         created += TryCreateBuff(ref skipped, "Buff_DexBoost",
-            "Impulso de Destreza",
-            "Otorga +3 de Destreza a todos los héroes contratados.",
+            "Dexterity Boost",
+            "Grants +3 Dexterity to all hired heroes.",
             cost: 5, type: BuffType.HeroStatBoost, isPermanent: true,
             affectedStat: HeroStat.Dexterity, statBoost: 3);
 
         created += TryCreateBuff(ref skipped, "Buff_IntBoost",
-            "Impulso de Inteligencia",
-            "Otorga +3 de Inteligencia a todos los héroes contratados.",
+            "Intelligence Boost",
+            "Grants +3 Intelligence to all hired heroes.",
             cost: 5, type: BuffType.HeroStatBoost, isPermanent: true,
             affectedStat: HeroStat.Intelligence, statBoost: 3);
 
         created += TryCreateBuff(ref skipped, "Buff_ChaBoost",
-            "Impulso de Carisma",
-            "Otorga +3 de Carisma a todos los héroes contratados.",
+            "Charisma Boost",
+            "Grants +3 Charisma to all hired heroes.",
             cost: 5, type: BuffType.HeroStatBoost, isPermanent: true,
             affectedStat: HeroStat.Charisma, statBoost: 3);
 
         created += TryCreateBuff(ref skipped, "Buff_Patience",
-            "Paciencia Infinita",
-            "Los héroes esperan un 50 % más de tiempo antes de irse.",
+            "Infinite Patience",
+            "Heroes wait 50% longer before leaving.",
             cost: 8, type: BuffType.PatienceBoost, isPermanent: true,
             patienceBoost: 0.5f);
 
         created += TryCreateBuff(ref skipped, "Buff_HintReveal",
-            "Magia de Adivinación",
-            "Revela el stat primario de una misión aleatoria en la mano actual.",
+            "Divination Magic",
+            "Reveals the primary stat of a random mission in the current hand.",
             cost: 6, type: BuffType.MissionHintReveal, isPermanent: false,
             hintsToReveal: 1);
 
         created += TryCreateBuff(ref skipped, "Buff_Reshuffle",
-            "Barajar de Nuevo",
-            "Descarta la mano actual y roba un nuevo conjunto de misiones del pool del día.",
+            "Reshuffle",
+            "Discard the current hand and draw a new set of missions from the day's pool.",
             cost: 3, type: BuffType.MissionReshuffle, isPermanent: false);
 
         created += TryCreateBuff(ref skipped, "Buff_FailSave",
-            "Amuleto Protector",
-            "Absorbe 1 muerte de héroe: si un héroe falla su misión, no cuenta como vida perdida.",
+            "Protective Amulet",
+            "Absorbs 1 hero death: if a hero fails their mission, it does not count as a lost life.",
             cost: 12, type: BuffType.FailProtection, isPermanent: true,
             failProtection: 1);
 
         created += TryCreateBuff(ref skipped, "Buff_MegaBoost",
-            "Tónico Milagroso",
-            "Otorga +10 a un stat aleatorio de todos los héroes contratados.",
+            "Miraculous Tonic",
+            "Grants +10 to a random stat of all hired heroes.",
             cost: 20, type: BuffType.HeroStatBoost, isPermanent: true,
-            // AffectedStat y StatBoostAmount se randomizarán en ShopManager al generar
-            // la oferta del día. Aquí usamos Strength como placeholder.
+            // AffectedStat and StatBoostAmount will be randomized in ShopManager when
+            // generating the daily offer. Using Strength as placeholder here.
             affectedStat: HeroStat.Strength, statBoost: 10);
 
-        // ── Consumibles ──────────────────────────────────────────────────────
+        // ── Consumables ──────────────────────────────────────────────────────
 
         created += TryCreateConsumable(ref skipped, "Consumable_StatRevealHand",
-            "Visión de Conjunto",
-            "Revela el stat primario de TODAS las cartas de misión en la mano actual. Un solo uso.",
+            "Overview",
+            "Reveals the primary stat of ALL mission cards in the current hand. Single use.",
             cost: 8, type: ConsumableType.StatRevealHand);
 
         created += TryCreateConsumable(ref skipped, "Consumable_FullStatReveal",
-            "Lectura Profunda",
-            "Revela TODOS los requisitos (primario y secundarios) de UNA carta de misión a tu elección. Un solo uso.",
+            "Deep Reading",
+            "Reveals ALL requirements (primary and secondary) of ONE mission card of your choice. Single use.",
             cost: 15, type: ConsumableType.FullStatReveal);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        Debug.Log($"[BuffDataGenerator] Finalizado — {created} assets creados, {skipped} omitidos (ya existían).");
+        Debug.Log($"[BuffDataGenerator] Done — {created} assets created, {skipped} skipped (already existed).");
         EditorUtility.DisplayDialog(
             "Buff & Consumable Assets",
-            $"Generación completada.\n\n✅ Creados: {created}\n⏭ Omitidos: {skipped}",
+            $"Generation complete.\n\n✅ Created: {created}\n⏭ Skipped: {skipped}",
             "OK");
     }
 

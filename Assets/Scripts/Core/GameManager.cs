@@ -33,7 +33,6 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()
@@ -41,6 +40,7 @@ public class GameManager : MonoBehaviour
         EventBus.Subscribe<OnHeroLeft>(HandleHeroLeft);
         EventBus.Subscribe<OnDayThresholdReached>(HandleDayThresholdReached);
         EventBus.Subscribe<OnMissionCompleted>(HandleMissionCompleted);
+        EventBus.Subscribe<OnHeroDied>(HandleHeroDied);
     }
 
     private void OnDisable()
@@ -48,6 +48,7 @@ public class GameManager : MonoBehaviour
         EventBus.Unsubscribe<OnHeroLeft>(HandleHeroLeft);
         EventBus.Unsubscribe<OnDayThresholdReached>(HandleDayThresholdReached);
         EventBus.Unsubscribe<OnMissionCompleted>(HandleMissionCompleted);
+        EventBus.Unsubscribe<OnHeroDied>(HandleHeroDied);
     }
 
     // ── Handlers de eventos ────────────────────────────────────────────────
@@ -66,6 +67,13 @@ public class GameManager : MonoBehaviour
     private void HandleMissionCompleted(OnMissionCompleted e)
     {
         TotalFameEarned += e.FameEarned;
+        AddCoins(e.CoinsEarned);
+    }
+
+    // Misión fallida sin FailProtection → el héroe muere → se pierde una vida
+    private void HandleHeroDied(OnHeroDied e)
+    {
+        LoseLife();
     }
 
     // ── API pública ────────────────────────────────────────────────────────

@@ -42,7 +42,11 @@ public class RunManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        StartDay();
     }
 
     // ── API pública ──────────────────────────────────────────────────────────

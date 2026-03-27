@@ -54,6 +54,16 @@ public class HeroDropTarget : MonoBehaviour, IDropHandler, IPointerEnterHandler,
         _heroSlot = GetComponent<HeroSlotUI>();
         _cardArea = Object.FindAnyObjectByType<MissionCardArea>();
 
+        // Si este GameObject no tiene ningún Graphic, Unity no puede detectar raycasts
+        // sobre él y OnDrop / OnPointerEnter nunca se dispararían. Añadimos una Image
+        // invisible que sirve como superficie de detección.
+        if (GetComponent<Graphic>() == null)
+        {
+            var img = gameObject.AddComponent<Image>();
+            img.color = new Color(0f, 0f, 0f, 0f);
+            img.raycastTarget = true;
+        }
+
         if (_highlightBorder != null)
             _highlightBorder.enabled = false;
 

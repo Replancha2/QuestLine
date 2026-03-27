@@ -30,6 +30,8 @@ public class MissionCardArea : MonoBehaviour
     [Header("Layout")]
     [Tooltip("Separación horizontal entre centros de carta (px).")]
     [SerializeField] private float _cardSpacing = 220f;
+    [Tooltip("Posición Y de las cartas en el espacio local del contenedor (negativo = más abajo).")]
+    [SerializeField] private float _cardYOffset = 0f;
     [Tooltip("Delay escalonado entre cartas al rellenar la mano de golpe (s).")]
     [SerializeField] private float _dealDelay   = 0.08f;
 
@@ -56,6 +58,11 @@ public class MissionCardArea : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        // Pivot (0.5, 0.5) → localPosition (0,0) = centro exacto de pantalla
+        var rt = GetComponent<RectTransform>();
+        if (rt != null)
+            rt.pivot = new Vector2(0.5f, 0.5f);
 
         if (_deck == null)
             _deck = MissionDeck.Instance;
@@ -220,10 +227,19 @@ public class MissionCardArea : MonoBehaviour
         // Aplicar estado actual del botón de descarte a la nueva carta
         UpdateDiscardButtonStates();
 
-        // Origen de la animación de entrada (posición del mazo en coordenadas locales)
-        Vector3 fromLocal = _deckAnchor != null
-            ? transform.InverseTransformPoint(_deckAnchor.position)
-            : Vector3.zero;
+        // Origen de la animación de entrada (posición del mazo en coordenadas locales).
+        // Sin deckAnchor, cada carta entra deslizándose desde abajo de su posición final
+        // en vez de desde el centro del canvas, evitando que parezca que spawnean a la derecha.
+        Vector3 fromLocal;
+        if (_deckAnchor != null)
+        {
+            fromLocal = transform.InverseTransformPoint(_deckAnchor.position);
+        }
+        else
+        {
+            var cardRT = card.GetComponent<RectTransform>();
+            fromLocal = cardRT.localPosition + Vector3.down * 250f;
+        }
 
         card.PlayEnterAnimation(fromLocal);
     }
@@ -256,12 +272,14 @@ public class MissionCardArea : MonoBehaviour
     }
 
     /// <summary>
-    /// Reposiciona las cartas en distribución horizontal centrada.
-    /// Con <paramref name="animated"/> = true podría aplicar tweens futuros (DOTween / Tarea 4).
+    /// Reposiciona las cartas centradas en (0,0) = centro de pantalla (pivot 0.5,0.5).
+    /// Ajusta el Y con _cardYOffset para mover el grupo arriba/abajo.
     /// </summary>
     private void RepositionCards(bool animated)
     {
-        int   count      = _handCards.Count;
+        int count = _handCards.Count;
+        if (count == 0) return;
+
         float totalWidth = (count - 1) * _cardSpacing;
         float startX     = -totalWidth * 0.5f;
 
@@ -272,8 +290,7 @@ public class MissionCardArea : MonoBehaviour
             var rt = _handCards[i].GetComponent<RectTransform>();
             if (rt == null) continue;
 
-            Vector3 target = new Vector3(startX + i * _cardSpacing, 0f, 0f);
-            rt.localPosition = target;
+            rt.localPosition = new Vector3(startX + i * _cardSpacing, _cardYOffset, 0f);
         }
     }
 

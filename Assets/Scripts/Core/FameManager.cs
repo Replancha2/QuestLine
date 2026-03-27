@@ -43,7 +43,6 @@ public class FameManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()

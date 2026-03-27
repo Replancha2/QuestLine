@@ -54,6 +54,16 @@ public class HeroSlotUI : MonoBehaviour
     public bool         IsOccupied  { get; private set; }
     public HeroInstance CurrentHero { get; private set; }
 
+    // ── Unity ─────────────────────────────────────────────────────────────────
+
+    private void Awake()
+    {
+        // Garantía defensiva: si la referencia serializada se pierde en alguna
+        // instancia del prefab, la buscamos en el mismo GameObject.
+        if (_patience == null)
+            _patience = GetComponent<HeroPatience>();
+    }
+
     // ── API pública ────────────────────────────────────────────────────────────
 
     /// <summary>

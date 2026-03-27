@@ -32,7 +32,6 @@ public class BuffManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     // ── API pública ──────────────────────────────────────────────────────────

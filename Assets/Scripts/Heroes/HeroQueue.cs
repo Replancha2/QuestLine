@@ -42,6 +42,35 @@ public class HeroQueue : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        // Auto-find slots if serialized references are broken (all pointing to same prefab)
+        bool needsAutoFind = _slots == null || _slots.Length == 0;
+        if (!needsAutoFind)
+        {
+            // Detect if all refs are duplicates (common scene setup bug)
+            bool allSame = true;
+            for (int i = 1; i < _slots.Length; i++)
+                if (_slots[i] != _slots[0]) { allSame = false; break; }
+            if (allSame && _slots.Length > 1)
+                needsAutoFind = true;
+        }
+
+        if (needsAutoFind)
+        {
+            // Look for HeroSlotUI components in sibling "HeroSlots" child
+            var parent = transform.parent;
+            if (parent != null)
+            {
+                var heroSlotsTF = parent.Find("HeroSlots") ?? parent.Find("HeroSlotsPanel");
+                if (heroSlotsTF != null)
+                    _slots = heroSlotsTF.GetComponentsInChildren<HeroSlotUI>(true);
+            }
+            // Fallback: find all in scene
+            if (_slots == null || _slots.Length == 0)
+                _slots = Object.FindObjectsByType<HeroSlotUI>(FindObjectsSortMode.None);
+
+            Debug.Log($"[HeroQueue] Auto-found {_slots?.Length ?? 0} HeroSlotUI slots.");
+        }
     }
 
     private void OnEnable()
