@@ -41,6 +41,20 @@ public class ShopSlotUI : MonoBehaviour
     /// <summary>Oferta que este slot representa.</summary>
     public ShopOffer Offer => _offer;
 
+    // ── Ciclo de vida ────────────────────────────────────────────────────────
+
+    private void Awake()
+    {
+        if (_buyButton != null)
+            _buyButton.onClick.AddListener(HandleBuyButton);
+    }
+
+    private void OnDestroy()
+    {
+        if (_buyButton != null)
+            _buyButton.onClick.RemoveListener(HandleBuyButton);
+    }
+
     // ── API pública ──────────────────────────────────────────────────────────
 
     /// <summary>Configura el slot con la oferta dada y activa el GameObject.</summary>

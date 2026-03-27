@@ -71,7 +71,10 @@ public class MissionCardArea : MonoBehaviour
     private void OnEnable()
     {
         if (_deck != null)
+        {
+            _deck.OnCardDrawn -= HandleCardDrawn; // evitar doble suscripción si se re-activa
             _deck.OnCardDrawn += HandleCardDrawn;
+        }
     }
 
     private void OnDisable()
@@ -177,6 +180,8 @@ public class MissionCardArea : MonoBehaviour
     /// </summary>
     public void ClearAllCards()
     {
+        StopAllCoroutines();
+        _pendingDeals = 0;
         foreach (var card in _handCards)
             if (card != null) Destroy(card.gameObject);
         _handCards.Clear();
@@ -287,10 +292,8 @@ public class MissionCardArea : MonoBehaviour
         {
             if (_handCards[i] == null) continue;
 
-            var rt = _handCards[i].GetComponent<RectTransform>();
-            if (rt == null) continue;
-
-            rt.localPosition = new Vector3(startX + i * _cardSpacing, _cardYOffset, 0f);
+            Vector3 pos = new Vector3(startX + i * _cardSpacing, _cardYOffset, 0f);
+            _handCards[i].SnapToPosition(pos);
         }
     }
 

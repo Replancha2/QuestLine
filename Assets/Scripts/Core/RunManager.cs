@@ -75,7 +75,11 @@ public class RunManager : MonoBehaviour
         if (FameManager.Instance != null)
             FameManager.Instance.ResetDayFame();
 
-        // 3. Construir el pool de misiones con rangos del día
+        // 3a. Limpiar las cartas visuales de la mano del día anterior
+        if (MissionCardArea.Instance != null)
+            MissionCardArea.Instance.ClearAllCards();
+
+        // 3b. Construir el pool de misiones con rangos del día
         if (MissionDeck.Instance != null)
         {
             // Si DayConfig está disponible, inyectarlo para que MissionDeck lo use

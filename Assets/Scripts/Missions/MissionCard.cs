@@ -81,6 +81,7 @@ public class MissionCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private Coroutine     _currentAnimation;
     private Coroutine     _pulseCoroutine;
     private bool          _wasInteractableLastFrame;
+    private Vector3       _enterTarget;
 
     // ── Unity ────────────────────────────────────────────────────────────────
 
@@ -217,6 +218,17 @@ public class MissionCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     }
 
     /// <summary>
+    /// Mueve la carta a <paramref name="localPos"/> actualizando también el destino
+    /// de la animación de entrada si esta sigue en curso, evitando que el tween
+    /// sobreescriba la posición correcta después de un reposicionamiento.
+    /// </summary>
+    public void SnapToPosition(Vector3 localPos)
+    {
+        _rectTransform.localPosition = localPos;
+        _enterTarget = localPos;
+    }
+
+    /// <summary>
     /// Animación de descarte: fade out + caída.
     /// Llama a <paramref name="onComplete"/> al terminar; MissionCardArea
     /// es responsable de llamar Destroy(gameObject) desde ese callback.
@@ -293,7 +305,7 @@ public class MissionCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     /// <summary>Slide + fade in desde la posición del mazo hasta la posición en mano.</summary>
     private IEnumerator EnterRoutine(Vector3 fromLocalPosition)
     {
-        Vector3 targetPosition        = _rectTransform.localPosition;
+        _enterTarget                  = _rectTransform.localPosition;
         _rectTransform.localPosition  = fromLocalPosition;
         if (_canvasGroup != null) _canvasGroup.alpha = 0f;
 
@@ -302,12 +314,12 @@ public class MissionCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         {
             elapsed += Time.deltaTime;
             float t = _enterCurve.Evaluate(Mathf.Clamp01(elapsed / _enterDuration));
-            _rectTransform.localPosition = Vector3.Lerp(fromLocalPosition, targetPosition, t);
+            _rectTransform.localPosition = Vector3.Lerp(fromLocalPosition, _enterTarget, t);
             if (_canvasGroup != null) _canvasGroup.alpha = t;
             yield return null;
         }
 
-        _rectTransform.localPosition = targetPosition;
+        _rectTransform.localPosition = _enterTarget;
         if (_canvasGroup != null) _canvasGroup.alpha = 1f;
         SetState(CardState.Normal);
         _currentAnimation = null;

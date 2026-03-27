@@ -31,6 +31,23 @@ public class HeroPatience : MonoBehaviour
 
     private const float NervousThreshold = 0.20f;
 
+    // ── Ciclo de vida ──────────────────────────────────────────────────────────
+
+    private void OnEnable()
+    {
+        EventBus.Subscribe<OnDayEnd>(HandleDayEnd);
+        EventBus.Subscribe<OnDayStart>(HandleDayStart);
+    }
+
+    private void OnDisable()
+    {
+        EventBus.Unsubscribe<OnDayEnd>(HandleDayEnd);
+        EventBus.Unsubscribe<OnDayStart>(HandleDayStart);
+    }
+
+    private void HandleDayEnd(OnDayEnd e)   => _isActive = false;
+    private void HandleDayStart(OnDayStart e) => _isActive = _hero != null && !_expired;
+
     // ── API pública ────────────────────────────────────────────────────────────
 
     /// <summary>

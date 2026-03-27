@@ -79,6 +79,7 @@ public class HeroQueue : MonoBehaviour
         EventBus.Subscribe<OnMissionAssigned>(HandleMissionAssigned);
         EventBus.Subscribe<OnHeroDied>       (HandleHeroDied);
         EventBus.Subscribe<OnHeroLeft>       (HandleHeroLeft);
+        EventBus.Subscribe<OnDayEnd>         (HandleDayEnd);
     }
 
     private void OnDisable()
@@ -87,6 +88,7 @@ public class HeroQueue : MonoBehaviour
         EventBus.Unsubscribe<OnMissionAssigned>(HandleMissionAssigned);
         EventBus.Unsubscribe<OnHeroDied>       (HandleHeroDied);
         EventBus.Unsubscribe<OnHeroLeft>       (HandleHeroLeft);
+        EventBus.Unsubscribe<OnDayEnd>         (HandleDayEnd);
     }
 
     // ── Handlers de eventos ────────────────────────────────────────────────────
@@ -95,6 +97,7 @@ public class HeroQueue : MonoBehaviour
     private void HandleMissionAssigned(OnMissionAssigned e) => RemoveHero(e.Hero);
     private void HandleHeroDied       (OnHeroDied e)        => RemoveHero(e.Hero);
     private void HandleHeroLeft       (OnHeroLeft e)        => RemoveHero(e.Hero);
+    private void HandleDayEnd         (OnDayEnd e)          => ClearAllHeroes();
 
     // ── API pública ────────────────────────────────────────────────────────────
 
@@ -158,9 +161,27 @@ public class HeroQueue : MonoBehaviour
     {
         if (_slots == null) return null;
         int limit = (SlotOverride > 0) ? Mathf.Min(SlotOverride, _slots.Length) : _slots.Length;
+
+        // Recopilar slots libres y elegir uno al azar para evitar que los héroes
+        // siempre se apilen en los primeros slots.
+        var free = new System.Collections.Generic.List<HeroSlotUI>(limit);
         for (int i = 0; i < limit; i++)
-            if (_slots[i] != null && !_slots[i].IsOccupied) return _slots[i];
-        return null;
+            if (_slots[i] != null && !_slots[i].IsOccupied) free.Add(_slots[i]);
+
+        if (free.Count == 0) return null;
+        return free[Random.Range(0, free.Count)];
+    }
+
+    private void ClearAllHeroes()
+    {
+        // Limpiar cola de espera
+        _waitingQueue.Clear();
+
+        // Liberar todos los slots ocupados
+        foreach (var kvp in _heroSlotMap)
+            if (kvp.Value != null) kvp.Value.FinishClear();
+
+        _heroSlotMap.Clear();
     }
 
     private void RemoveFromWaitingQueue(HeroInstance hero)

@@ -11,6 +11,7 @@ public class GameOverController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _dayText;
     [SerializeField] private TextMeshProUGUI _fameText;
     [SerializeField] private Button          _restartButton;
+    [SerializeField] private Button          _quitButton;
 
     private void Start()
     {
@@ -22,5 +23,15 @@ public class GameOverController : MonoBehaviour
 
         if (_restartButton != null)
             _restartButton.onClick.AddListener(() => SceneManager.LoadScene("Gameplay 1"));
+
+        if (_quitButton != null)
+            _quitButton.onClick.AddListener(() =>
+            {
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
+#endif
+            });
     }
 }
