@@ -15,7 +15,7 @@ MonoBehaviour:
   BuffName: Amuleto Protector
   Description: "Absorbe 1 muerte de h\xE9roe: si un h\xE9roe falla su misi\xF3n,
     no cuenta como vida perdida."
-  Icon: {fileID: 0}
+  Icon: {fileID: 9090724530243979454, guid: 40fa0f30d57da4e4c9419b2eb6c51484, type: 3}
   Cost: 150
   Type: 4
   IsPermanent: 1

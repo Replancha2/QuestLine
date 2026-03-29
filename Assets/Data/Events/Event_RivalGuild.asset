@@ -11,12 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_RivalGuild
-  userData:
-  assetBundleName:
-  assetBundleVariant:
-  EventTitle: "Guild rival"
-  EventDescription: "La guild rival robó héroes con mejores contratos. Solo 3 slots disponibles hoy."
-  EventIcon: {fileID: 0}
+  m_EditorClassIdentifier: 
+  EventTitle: Guild rival
+  EventDescription: "La guild rival rob\xF3 h\xE9roes con mejores contratos. Solo
+    3 slots disponibles hoy."
+  EventIcon: {fileID: 621222158458474870, guid: 18ffced6013353349b1f94347fb8c696, type: 3}
   Type: 6
   AffectedStat: 0
   StatModifier: 0

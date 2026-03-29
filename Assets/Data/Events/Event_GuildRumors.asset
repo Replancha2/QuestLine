@@ -11,12 +11,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_GuildRumors
-  userData:
-  assetBundleName:
-  assetBundleVariant:
-  EventTitle: "Rumores de riqueza"
-  EventDescription: "Corren rumores de riqueza en la región. +20% de Fama hoy."
-  EventIcon: {fileID: 0}
+  m_EditorClassIdentifier: 
+  EventTitle: Rumores de riqueza
+  EventDescription: "Corren rumores de riqueza en la regi\xF3n. +20% de Fama hoy."
+  EventIcon: {fileID: -8171958947958391838, guid: 18fa7c208c7c9bd49ab871bd02ec1449, type: 3}
   Type: 4
   AffectedStat: 0
   StatModifier: 0

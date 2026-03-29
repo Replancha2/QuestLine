@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
   BuffName: Impulso de Destreza
   Description: "Otorga +3 de Destreza a todos los h\xE9roes contratados."
-  Icon: {fileID: 0}
+  Icon: {fileID: 3560097442334419220, guid: 51897e27f05fb3448a1c02bc955dc345, type: 3}
   Cost: 60
   Type: 0
   IsPermanent: 1

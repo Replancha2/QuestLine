@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
   BuffName: "Magia de Adivinaci\xF3n"
   Description: "Revela el stat primario de una misi\xF3n aleatoria en la mano actual."
-  Icon: {fileID: 0}
+  Icon: {fileID: -4440155120140874565, guid: bc76ef4e2b60e1845934826274bd6219, type: 3}
   Cost: 80
   Type: 1
   IsPermanent: 0

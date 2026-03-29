@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
   BuffName: Impulso de Carisma
   Description: "Otorga +3 de Carisma a todos los h\xE9roes contratados."
-  Icon: {fileID: 0}
+  Icon: {fileID: 1750363475519744411, guid: ff6ddc61334bd7c4ab28ebe414d9e6b7, type: 3}
   Cost: 60
   Type: 0
   IsPermanent: 1

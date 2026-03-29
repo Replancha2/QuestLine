@@ -164,9 +164,14 @@ public class ConsumableInventoryUI : MonoBehaviour
     {
         GameObject slot = Instantiate(_slotPrefab, _slotsContainer);
 
-        var img = slot.GetComponentInChildren<Image>();
-        if (img != null && icon != null)
-            img.sprite = icon;
+        // Find the specific IconImage child, not just any Image component
+        var iconImageTransform = slot.transform.Find("IconImage");
+        if (iconImageTransform != null)
+        {
+            var img = iconImageTransform.GetComponent<Image>();
+            if (img != null && icon != null)
+                img.sprite = icon;
+        }
 
         foreach (var t in slot.GetComponentsInChildren<TextMeshProUGUI>())
         {

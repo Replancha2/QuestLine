@@ -11,12 +11,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_SwiftHeroes
-  userData:
-  assetBundleName:
-  assetBundleVariant:
-  EventTitle: "Héroes ansiosos"
-  EventDescription: "Los héroes están cargados de energía. +3 Destreza hoy."
-  EventIcon: {fileID: 0}
+  m_EditorClassIdentifier: 
+  EventTitle: "H\xE9roes ansiosos"
+  EventDescription: "Los h\xE9roes est\xE1n cargados de energ\xEDa. +3 Destreza hoy."
+  EventIcon: {fileID: 7200068995114476322, guid: 091ca6cb5229b24479b585b0f2abad26, type: 3}
   Type: 0
   AffectedStat: 1
   StatModifier: 3

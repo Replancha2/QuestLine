@@ -11,12 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_FairWeather
-  userData:
-  assetBundleName:
-  assetBundleVariant:
-  EventTitle: "Clima ideal"
-  EventDescription: "Clima perfecto para viajar. Los héroes llegan 20% más rápido hoy."
-  EventIcon: {fileID: 0}
+  m_EditorClassIdentifier: 
+  EventTitle: Clima ideal
+  EventDescription: "Clima perfecto para viajar. Los h\xE9roes llegan 20% m\xE1s
+    r\xE1pido hoy."
+  EventIcon: {fileID: 8896151521277632525, guid: 2fd59aff3caeeee4daf08709e8e88a48, type: 3}
   Type: 2
   AffectedStat: 0
   StatModifier: 0

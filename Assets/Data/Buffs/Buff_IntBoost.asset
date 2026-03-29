@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
   BuffName: Impulso de Inteligencia
   Description: "Otorga +3 de Inteligencia a todos los h\xE9roes contratados."
-  Icon: {fileID: 0}
+  Icon: {fileID: -2187575702119994641, guid: 4348a4ce4fa032d41b28f6b8f8f8bb4c, type: 3}
   Cost: 60
   Type: 0
   IsPermanent: 1

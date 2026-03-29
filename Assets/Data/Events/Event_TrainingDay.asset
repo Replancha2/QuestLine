@@ -11,12 +11,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_TrainingDay
-  userData:
-  assetBundleName:
-  assetBundleVariant:
-  EventTitle: "Día de instrucción"
-  EventDescription: "Un veterano visitó la guild anoche. +3 Inteligencia hoy."
-  EventIcon: {fileID: 0}
+  m_EditorClassIdentifier: 
+  EventTitle: "D\xEDa de instrucci\xF3n"
+  EventDescription: "Un veterano visit\xF3 la guild anoche. +3 Inteligencia hoy."
+  EventIcon: {fileID: 21300000, guid: caf0d54cbfc2b494088af27f076a42a3, type: 3}
   Type: 0
   AffectedStat: 2
   StatModifier: 3

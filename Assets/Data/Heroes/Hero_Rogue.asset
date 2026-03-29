@@ -11,14 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 17af62446a7752b43800b78536d870c0, type: 3}
   m_Name: Hero_Rogue
-  userData:
-  assetBundleName:
-  assetBundleVariant:
+  m_EditorClassIdentifier: 
   HeroName: Rogue
-  Portrait: {fileID: 0}
+  Portrait: {fileID: -6193933383340513176, guid: 5dbe4a179e988124a81d857ad5c6b0a5, type: 3}
   Rarity: 0
   StrengthRange: {x: 3, y: 6}
-  DexterityRange: {x: 7, y: 12}
+  DexterityRange: {x: 5, y: 12}
   IntelligenceRange: {x: 4, y: 7}
   CharismaRange: {x: 3, y: 6}
   PatienceMultiplier: 0.8

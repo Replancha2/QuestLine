@@ -15,6 +15,6 @@ MonoBehaviour:
   Name: "Visi\xF3n de Conjunto"
   Description: "Revela el stat primario de TODAS las cartas de misi\xF3n en la mano
     actual. Un solo uso."
-  Icon: {fileID: 0}
+  Icon: {fileID: -6419843009650124306, guid: 51897e27f05fb3448a1c02bc955dc345, type: 3}
   Cost: 12
   Type: 2
