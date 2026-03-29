@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_PlagueScare
   m_EditorClassIdentifier: 
-  EventTitle: Miedo a la peste
-  EventDescription: Rumores de enfermedad sacuden la ciudad. -2 a todos los stats
-    hoy.
+  EventTitle: Plague
+  EventDescription: Rumors of a plague hits our town. -2 to every stat.
   EventIcon: {fileID: 4184808205758099403, guid: 2bd8032dc68ef3344a947df524493bcf, type: 3}
   Type: 1
   AffectedStat: 0

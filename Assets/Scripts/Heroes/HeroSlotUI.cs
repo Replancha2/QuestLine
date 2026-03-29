@@ -62,6 +62,10 @@ public class HeroSlotUI : MonoBehaviour
         // instancia del prefab, la buscamos en el mismo GameObject.
         if (_patience == null)
             _patience = GetComponent<HeroPatience>();
+
+        // Asegurar que slots vacíos estén inactivos para evitar placeholders
+        if (_slotRoot != null && !IsOccupied)
+            _slotRoot.SetActive(false);
     }
 
     // ── API pública ────────────────────────────────────────────────────────────

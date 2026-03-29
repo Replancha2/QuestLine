@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdc5726568dbba687be0c8046c42aed6, type: 3}
   m_Name: Consumable_StatRevealHand
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
-  Name: "Visi\xF3n de Conjunto"
-  Description: "Revela el stat primario de TODAS las cartas de misi\xF3n en la mano
-    actual. Un solo uso."
-  Icon: {fileID: -6419843009650124306, guid: 51897e27f05fb3448a1c02bc955dc345, type: 3}
-  Cost: 12
+  Name: Clear instructions
+  Description: Switch your current hand to revealed stats missions only
+  Icon: {fileID: 2045492094208909694, guid: efbeca8cfbfcb534e8701731d195000a, type: 3}
+  Cost: 24
   Type: 2

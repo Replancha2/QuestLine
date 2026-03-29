@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_HeavyRain
   m_EditorClassIdentifier: 
-  EventTitle: Lluvia torrencial
-  EventDescription: "Las rutas est\xE1n inundadas. Los h\xE9roes llegan 30% m\xE1s
-    lento hoy."
+  EventTitle: Stormy day
+  EventDescription: Good day to stay in bed. Heroes arrive 30% slower.
   EventIcon: {fileID: 5627427673090866100, guid: 93b8fdb66b0c7ef41acc85a1fe5d071a, type: 3}
   Type: 3
   AffectedStat: 0

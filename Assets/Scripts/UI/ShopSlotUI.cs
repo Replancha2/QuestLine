@@ -66,7 +66,7 @@ public class ShopSlotUI : MonoBehaviour
         if (_iconImage        != null) _iconImage.sprite  = offer.Icon;
         if (_nameText         != null) _nameText.text     = offer.Name;
         if (_descriptionText  != null) _descriptionText.text = offer.Description;
-        if (_costText         != null) _costText.text     = $"{offer.Cost} 🪙";
+        if (_costText         != null) _costText.text     = $"{offer.Cost}";
 
         SetSoldState(false);
         gameObject.SetActive(true);

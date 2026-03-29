@@ -85,6 +85,26 @@ public class HeroSpawner : MonoBehaviour
         SpawnHero();
         SpawnHero();
 
+        // Esperar un frame para que los héroes se asignen a slots
+        yield return null;
+
+        // Eliminar 2 héroes al azar para evitar placeholders iniciales
+        if (HeroQueue.Instance != null)
+        {
+            var heroes = new System.Collections.Generic.List<HeroInstance>(HeroQueue.Instance.CurrentHeroes);
+            if (heroes.Count >= 2)
+            {
+                // Barajar y eliminar 2
+                for (int i = heroes.Count - 1; i > 0; i--)
+                {
+                    int j = UnityEngine.Random.Range(0, i + 1);
+                    (heroes[i], heroes[j]) = (heroes[j], heroes[i]);
+                }
+                HeroQueue.Instance.RemoveHero(heroes[0]);
+                HeroQueue.Instance.RemoveHero(heroes[1]);
+            }
+        }
+
         while (_isSpawning)
         {
             float interval = Mathf.Max(

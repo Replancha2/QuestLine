@@ -16,10 +16,10 @@ public class GameOverController : MonoBehaviour
     private void Start()
     {
         if (_dayText != null)
-            _dayText.text = $"Llegaste al Día {GameOverData.DayReached}";
+            _dayText.text = $"Higher day achieved: {GameOverData.DayReached}";
 
         if (_fameText != null)
-            _fameText.text = $"Fama Total: {GameOverData.TotalFame}";
+            _fameText.text = $"Total Fame: {GameOverData.TotalFame}";
 
         if (_restartButton != null)
             _restartButton.onClick.AddListener(() => SceneManager.LoadScene("Gameplay 1"));

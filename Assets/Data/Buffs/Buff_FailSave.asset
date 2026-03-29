@@ -12,13 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2912e191199ea5b0b0681845845fcd5, type: 3}
   m_Name: Buff_FailSave
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
-  BuffName: Amuleto Protector
-  Description: "Absorbe 1 muerte de h\xE9roe: si un h\xE9roe falla su misi\xF3n,
-    no cuenta como vida perdida."
+  BuffName: IronHeart
+  Description: Saves a hero from dying on their mission.
   Icon: {fileID: 9090724530243979454, guid: 40fa0f30d57da4e4c9419b2eb6c51484, type: 3}
-  Cost: 150
+  Cost: 80
   Type: 4
-  IsPermanent: 1
+  IsPermanent: 0
   AffectedStat: 0
   StatBoostAmount: 0
   HintsToReveal: 0

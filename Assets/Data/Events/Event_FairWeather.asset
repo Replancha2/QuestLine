@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_FairWeather
   m_EditorClassIdentifier: 
-  EventTitle: Clima ideal
-  EventDescription: "Clima perfecto para viajar. Los h\xE9roes llegan 20% m\xE1s
-    r\xE1pido hoy."
+  EventTitle: Nice Weather
+  EventDescription: Perfect weather to travel. Heroes arrives 20% Faster.
   EventIcon: {fileID: 8896151521277632525, guid: 2fd59aff3caeeee4daf08709e8e88a48, type: 3}
   Type: 2
   AffectedStat: 0

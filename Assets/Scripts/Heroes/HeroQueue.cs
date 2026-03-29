@@ -29,6 +29,11 @@ public class HeroQueue : MonoBehaviour
     /// </summary>
     public int SlotOverride { get; set; } = -1;
 
+    /// <summary>
+    /// Lista de héroes actualmente en slots visibles.
+    /// </summary>
+    public IEnumerable<HeroInstance> CurrentHeroes => _heroSlotMap.Keys;
+
     // Cola de espera off-screen cuando los 4 slots están llenos
     private readonly Queue<HeroInstance>            _waitingQueue = new Queue<HeroInstance>();
 

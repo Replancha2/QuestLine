@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_Gossip
   m_EditorClassIdentifier: 
-  EventTitle: Chismes en la guild
-  EventDescription: "Rumores maliciosos corroen la confianza entre los h\xE9roes.
-    -3 Carisma hoy."
+  EventTitle: Malicious Rumors
+  EventDescription: Malicious rumors hits the guild's heroes. -3 Charisma.
   EventIcon: {fileID: -8862163080040580045, guid: 9b1354b2f787e2a4285bcdb644f4efd8, type: 3}
   Type: 1
   AffectedStat: 3

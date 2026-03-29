@@ -104,9 +104,15 @@ public class HeroInstance
     ///   Demanding → false si el Rank de la misión es R3 o inferior
     ///   Reckless  → true siempre (no filtra misiones)
     ///   Resto     → true
+    ///
+    /// Softlock: Hasta el día 5, los héroes deben aceptar misiones de rango 1-3.
     /// </summary>
     public bool WillAcceptMission(MissionInstance mission)
     {
+        // Softlock: En los primeros 5 días, forzar aceptación de misiones de rango 1-3
+        if (GameManager.Instance != null && GameManager.Instance.DayNumber <= 5 && (int)mission.Template.Rank <= 3)
+            return true;
+
         if (Traits.Contains(HeroTrait.Greedy) && mission.Template.CoinsReward < 6)
             return false;
 

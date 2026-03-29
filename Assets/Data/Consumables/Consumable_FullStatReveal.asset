@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdc5726568dbba687be0c8046c42aed6, type: 3}
   m_Name: Consumable_FullStatReveal
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
-  Name: Lectura Profunda
-  Description: "Revela TODOS los requisitos (primario y secundarios) de UNA carta
-    de misi\xF3n a tu elecci\xF3n. Un solo uso."
+  Name: Quick Mission
+  Description: Replaces a random mission on your hand for a mission with revealed
+    stats
   Icon: {fileID: -1255637322393689108, guid: 08a1f7cf9757e5c42bb8ede78e341641, type: 3}
-  Cost: 24
+  Cost: 12
   Type: 3

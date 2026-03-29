@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2912e191199ea5b0b0681845845fcd5, type: 3}
   m_Name: Buff_HintReveal
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
-  BuffName: "Magia de Adivinaci\xF3n"
-  Description: "Revela el stat primario de una misi\xF3n aleatoria en la mano actual."
+  BuffName: Divination magic
+  Description: Predicts the fate of a mission once per day, saving the hero in case
+    of failure.
   Icon: {fileID: -4440155120140874565, guid: bc76ef4e2b60e1845934826274bd6219, type: 3}
-  Cost: 80
+  Cost: 150
   Type: 1
-  IsPermanent: 0
+  IsPermanent: 1
   AffectedStat: 0
   StatBoostAmount: 0
-  HintsToReveal: 1
+  HintsToReveal: 0
   PatienceBoostPercent: 0
-  FailProtectionCount: 0
+  FailProtectionCount: 1

@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_HeroFeast
   m_EditorClassIdentifier: 
-  EventTitle: "Fest\xEDn de h\xE9roes"
-  EventDescription: "Los h\xE9roes festejaron anoche. +3 Fuerza hoy."
+  EventTitle: Party Hard.
+  EventDescription: Our Heroes partied all night. +3 Strength.
   EventIcon: {fileID: 1144889671607394717, guid: 229fa5aa630b8634bb6390dff3669911, type: 3}
   Type: 0
   AffectedStat: 0

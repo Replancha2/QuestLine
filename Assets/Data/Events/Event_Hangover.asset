@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_Hangover
   m_EditorClassIdentifier: 
-  EventTitle: Resaca colectiva
-  EventDescription: "Muchos h\xE9roes llegaron con resaca de la fiesta de anoche.
-    -3 Fuerza hoy."
+  EventTitle: Hangover
+  EventDescription: Our Heroes partied all night long. -3 Strength.
   EventIcon: {fileID: -9086870433655771597, guid: 866542a002d29e144ac0b2bf7d68257c, type: 3}
   Type: 1
   AffectedStat: 0

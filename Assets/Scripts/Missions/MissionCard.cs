@@ -142,10 +142,10 @@ public class MissionCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         if (Mission == null) return;
 
         if (_titleText != null)
-            _titleText.text = Mission.Template.MissionTitle;
+            _titleText.text = BuildGameplayTitle(Mission.Template);
 
         if (_descriptionText != null)
-            _descriptionText.text = Mission.Template.Description;
+            _descriptionText.text = BuildGameplayDescription(Mission);
 
         if (_rankText != null)
             _rankText.text = $"R{(int)Mission.Template.Rank}";
@@ -162,6 +162,50 @@ public class MissionCard : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 : _defaultArt;
 
         RefreshHints();
+    }
+
+    private string BuildGameplayTitle(MissionData template)
+    {
+        if (template == null) return string.Empty;
+
+        string[] adjectives = template.PrimaryStat switch
+        {
+            HeroStat.Strength => new[] { "Brutal", "Muscular", "Ironclad", "Brawny", "Colossal", "Titanic", "Rugged", "Forceful", "Hulking", "Ferocious", "Raw", "Powerhouse" },
+            HeroStat.Dexterity => new[] { "Nimble", "Swift", "Fleet", "Fleeting", "Sleek", "Lithe", "Dexterous", "Quick", "Spry", "Slippery", "Sure-footed", "Agile" },
+            HeroStat.Intelligence => new[] { "Arcane", "Clever", "Wise", "Insightful", "Sage", "Brainy", "Scholarly", "Mystic", "Cunning", "Analytical", "Inventive", "Tactical" },
+            HeroStat.Charisma => new[] { "Magnetic", "Charming", "Persuasive", "Glib", "Regal", "Enchanting", "Alluring", "Commanding", "Diplomatic", "Captivating", "Influential", "Grand" },
+            _ => new[] { "Critical", "Vital", "Urgent", "Immediate", "Core", "Prime", "Major", "Central", "Essential", "Prime", "Key", "Heavy" }
+        };
+
+        string[] locations = new[] {
+            "Davenport", "DoomHaven", "Bloomglade", "Shadowfen", "Ironspire", "Crystalreach", "Stormhold", "Emberfall", "Frostpeak", "Thornvale",
+            "Silverbrook", "Darkmoor", "Suncrest", "Moonhaven", "Bloodridge", "Starfall", "Windward", "Stoneheart", "Ravencliff", "Goldleaf",
+            "Mistvale", "Fireforge", "Icewind", "Thunderpeak", "Soulspire", "Dragonreach", "Phoenixgate", "Wolfhaven", "Bearclaw", "Eagle's Nest",
+            "Serpent's Coil", "Lion's Mane", "Tiger's Claw", "Falcon's Wing", "Owl's Perch", "Hawk's Eye", "Crow's Beak", "Raven's Wing", "Sparrow's Song", "Swan's Grace",
+            "Deer's Leap", "Stag's Horn", "Boar's Tusk", "Ram's Head", "Bull's Charge", "Horse's Gallop", "Wolf's Howl", "Bear's Roar"
+        };
+
+        string chosenAdjective = adjectives[UnityEngine.Random.Range(0, adjectives.Length)];
+        string chosenLocation = locations[UnityEngine.Random.Range(0, locations.Length)];
+        return $"{chosenAdjective} {template.PrimaryStat} needed at {chosenLocation}";
+    }
+
+    private string BuildGameplayDescription(MissionInstance mission)
+    {
+        if (mission == null || mission.Template == null) return string.Empty;
+
+        bool isHidden = mission.Template.Rank >= MissionRank.R5 && !mission.HasAnyRevealedHint();
+        string primaryText = isHidden ? "??" : mission.Template.PrimaryStat.ToString();
+
+        string description = $"Primary Stat: {primaryText}";
+
+        if (mission.Template.SecondaryStats != null && mission.Template.SecondaryStats.Length > 0)
+        {
+            string secondaryText = isHidden ? "??" : string.Join(", ", mission.Template.SecondaryStats);
+            description += $"\nSecondary Stat: {secondaryText}";
+        }
+
+        return description;
     }
 
     /// <summary>Cambia el estado visual de la carta.</summary>

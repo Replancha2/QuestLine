@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2912e191199ea5b0b0681845845fcd5, type: 3}
   m_Name: Buff_MegaBoost
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
-  BuffName: "T\xF3nico Milagroso"
-  Description: "Otorga +10 a un stat aleatorio de todos los h\xE9roes contratados."
+  BuffName: The Everything Potion
+  Description: Gives +10 on every stat of every hero permanently.(this effect can
+    stack)
   Icon: {fileID: -2880734798192188640, guid: 0177a2a45e53e6646b4979a888bcdf27, type: 3}
   Cost: 250
   Type: 0

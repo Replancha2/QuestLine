@@ -12,10 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_MerchantBonus
   m_EditorClassIdentifier: 
-  EventTitle: Visita del mercader
-  EventDescription: "Un mercader carism\xE1tico pas\xF3 por la guild. +3 Carisma
-    hoy."
-  EventIcon: {fileID: 21300000, guid: 7f6b3a6e83809a647ae3472a0cff2451, type: 3}
+  EventTitle: Trader's Visit
+  EventDescription: A Wandering Trader visited our guild. +3 Charisma.
+  EventIcon: {fileID: -2775914654917446093, guid: 7f6b3a6e83809a647ae3472a0cff2451, type: 3}
   Type: 0
   AffectedStat: 3
   StatModifier: 3

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Event_RivalGuild
   m_EditorClassIdentifier: 
   EventTitle: Guild rival
-  EventDescription: "La guild rival rob\xF3 h\xE9roes con mejores contratos. Solo
-    3 slots disponibles hoy."
+  EventDescription: Our rivals stole our heroes with better missions!. Only 3 hero
+    slots available.
   EventIcon: {fileID: 621222158458474870, guid: 18ffced6013353349b1f94347fb8c696, type: 3}
   Type: 6
   AffectedStat: 0

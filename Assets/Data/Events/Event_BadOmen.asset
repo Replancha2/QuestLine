@@ -11,12 +11,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 655356cdad952cd12b3a0569186ac11b, type: 3}
   m_Name: Event_BadOmen
-  userData:
-  assetBundleName:
-  assetBundleVariant:
-  EventTitle: "Mal presagio"
-  EventDescription: "Un presagio oscuro nubla la reputación de la guild. -20% de Fama hoy."
-  EventIcon: {fileID: 0}
+  m_EditorClassIdentifier: 
+  EventTitle: Bad Omen
+  EventDescription: A dark Omen clouds the guild's reputation. -20% Fame gain.
+  EventIcon: {fileID: -6276431412868162781, guid: cb1c2e8a84321c6489066d50dd99f3e0, type: 3}
   Type: 5
   AffectedStat: 0
   StatModifier: 0

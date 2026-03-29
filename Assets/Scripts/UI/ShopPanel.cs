@@ -51,7 +51,7 @@ public class ShopPanel : MonoBehaviour
             _continueButton.onClick.AddListener(HandleContinueClicked);
 
         if (_titleText != null)
-            _titleText.text = "El Tablón de Buffs";
+            _titleText.text = "MOE EXQUISITE SHOWCASE OF TRINKETS AND DOODAS";
 
         // Iniciar oculto
         gameObject.SetActive(false);
@@ -151,7 +151,7 @@ public class ShopPanel : MonoBehaviour
     private void RefreshCoinDisplay()
     {
         if (_coinCountText != null)
-            _coinCountText.text = $"Monedas: {CurrentCoins}";
+            _coinCountText.text = $"Coins: {CurrentCoins}";
     }
 
     private void RefreshSlotAffordability()

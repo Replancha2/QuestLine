@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2912e191199ea5b0b0681845845fcd5, type: 3}
   m_Name: Buff_StrBoost
   m_EditorClassIdentifier: Assembly-CSharp::BuffData
-  BuffName: Impulso de Fuerza
-  Description: "Otorga +3 de Fuerza a todos los h\xE9roes contratados."
+  BuffName: The Sisyphus Trials
+  Description: Gives +3 Strength to every hero permanently.
   Icon: {fileID: 3641319749899425954, guid: 024dd3416352d7e4e93d8c2d8a4d68d8, type: 3}
   Cost: 60
   Type: 0

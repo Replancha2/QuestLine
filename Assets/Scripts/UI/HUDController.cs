@@ -62,7 +62,7 @@ public class HUDController : MonoBehaviour
     private void HandleFameEarned(OnFameEarned e)
     {
         if (_fameText != null)
-            _fameText.text = $"{e.TotalFame}/{e.DayThreshold} Fama";
+            _fameText.text = $"{e.TotalFame}/{e.DayThreshold} Fame";
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ public class HUDController : MonoBehaviour
         if (GameManager.Instance != null)
         {
             if (_dayText != null)
-                _dayText.text = $"Día {GameManager.Instance.DayNumber}";
+                _dayText.text = $"Day {GameManager.Instance.DayNumber}";
 
             if (_livesText != null)
                 _livesText.text = BuildHeartsString(GameManager.Instance.DayLives);
@@ -82,7 +82,7 @@ public class HUDController : MonoBehaviour
         {
             int day       = GameManager.Instance != null ? GameManager.Instance.DayNumber : 1;
             int threshold = FameManager.Instance.GetDayThreshold(day);
-            _fameText.text = $"{FameManager.Instance.DayFame}/{threshold} Fama";
+            _fameText.text = $"{FameManager.Instance.DayFame}/{threshold} Fame";
         }
     }
 
